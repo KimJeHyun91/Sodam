@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'settings_page.dart';
+import '../store.dart';
+import '../collection.dart';
 
 class MyPage extends StatelessWidget {
   const MyPage({super.key});
@@ -108,14 +110,22 @@ class MyPage extends StatelessWidget {
                   children: [
                     // 왼쪽: 장터
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const StorePage()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text("장터", style: TextStyle(fontSize: 18)),
                         ),
-                        alignment: Alignment.center,
-                        child: const Text("장터", style: TextStyle(fontSize: 18)),
                       ),
                     ),
 
@@ -123,14 +133,22 @@ class MyPage extends StatelessWidget {
 
                     // 오른쪽: 수집
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CollectionPage()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text("수집", style: TextStyle(fontSize: 18)),
                         ),
-                        alignment: Alignment.center,
-                        child: const Text("수집", style: TextStyle(fontSize: 18)),
                       ),
                     ),
                   ],
@@ -177,7 +195,7 @@ class MyPage extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // ✅ 날짜 표시 + 출석 여부
+        // 날짜 표시 + 출석 여부
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: weekDates.map((date) {
