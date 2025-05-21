@@ -3,7 +3,12 @@ import 'intro_page.dart';
 
 void main() {
   runApp(MaterialApp(
-    home: IntroPage(),
+    home: const IntroPage(),
     debugShowCheckedModeBanner: false,
+
+    // 전역 폰트 적용
+    theme: ThemeData(
+      fontFamily: 'EBSHunminjeongeum',
+    ),
   ));
 }

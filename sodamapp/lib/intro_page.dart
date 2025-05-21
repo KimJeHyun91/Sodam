@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pages/auth_choice_page.dart';
 import 'main_page.dart'; // 👉 네가 이동할 메인페이지
 
 class IntroPage extends StatefulWidget {
@@ -16,8 +17,7 @@ class _IntroPageState extends State<IntroPage> {
     // 3초 후 자동으로 메인페이지로 이동
     Future.delayed(Duration(seconds: 3), () {
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainPage()),
+          context, MaterialPageRoute(builder: (context) => const AuthChoicePage())
       );
     });
   }
