@@ -1,5 +1,6 @@
 package com.sodam.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,19 @@ public class MemberService {
 
 	public MemberDomain add(MemberDomain member_domain) {
 		return member_repository.save(member_domain);
+	}
+
+	public MemberDomain update(MemberDomain member_domain) {
+		return member_repository.save(member_domain);
+	}
+
+	public List<String> nickname_check(String nickname) {
+		return member_repository.nickname_check(nickname);
+	}
+
+	public Optional<MemberDomain> delete(String id) {
+		member_repository.deleteById(id);;
+		return member_repository.findById(id);
 	}
 
 }
