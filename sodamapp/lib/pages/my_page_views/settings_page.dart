@@ -76,7 +76,7 @@ class SettingsPage extends StatelessWidget {
         // 로그아웃 처리 (필요하다면 토큰 삭제 등 추가)
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const MainPage()), // ← 처음 화면으로 이동
+          MaterialPageRoute(builder: (context) => const Main_Page()), // ← 처음 화면으로 이동
               (route) => false, // 스택 전부 제거
         );
       },
