@@ -78,11 +78,11 @@ flutter:
   fonts:
     - family: EBSHunminjeongeum
       fonts:
-        - asset: lib/assets/fonts/EBSHunminjeongeumL.ttf
+        - asset: assets/fonts/EBSHunminjeongeumL.ttf
           weight: 300
-        - asset: lib/assets/fonts/EBSHunminjeongeumR.ttf
+        - asset: assets/fonts/EBSHunminjeongeumR.ttf
           weight: 400
-        - asset: lib/assets/fonts/EBSHunminjeongeumSB.ttf
+        - asset: assets/fonts/EBSHunminjeongeumSB.ttf
           weight: 600
   # fonts:
   #   - family: Schyler

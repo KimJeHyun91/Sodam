@@ -3,6 +3,7 @@ import 'edit_profile_page.dart';
 import 'theme_setting_page.dart';
 import 'notification_setting_page.dart';
 import 'help_page.dart';
+import 'package:sodam_test/intro_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -76,7 +77,8 @@ class SettingsPage extends StatelessWidget {
         // 로그아웃 처리 (필요하다면 토큰 삭제 등 추가)
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const Main_Page()), // ← 처음 화면으로 이동
+          MaterialPageRoute(builder: (context) => const IntroPage()),
+          // ← 처음 화면으로 이동
               (route) => false, // 스택 전부 제거
         );
       },
@@ -91,8 +93,10 @@ class SettingsPage extends StatelessWidget {
         alignment: Alignment.center,
         child: const Text(
           "로그아웃",
-          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
+  }
 }
