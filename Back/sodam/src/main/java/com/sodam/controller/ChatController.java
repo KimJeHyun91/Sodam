@@ -1,50 +1,71 @@
 package com.sodam.controller;
 
-import java.util.List;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import com.sodam.dto.ChatRequest;
 import com.sodam.entity.ChatMessage;
 import com.sodam.entity.ChatRoom;
 import com.sodam.service.ChatService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/chat")
 public class ChatController {
+
     @Autowired
-    ChatService chatService;
+    private ChatService chatService;
 
     @PostMapping("/room")
-    public ResponseEntity<ChatRoom> createRoom(@RequestBody @Valid ChatRequest.CreateRoom request) {
-        return ResponseEntity.ok(chatService.createChatRoom(request.getUserAId(), request.getUserBId()));
-    }
-
-    @GetMapping("/rooms/{userId}")
-    public ResponseEntity<List<ChatRoom>> getRooms(@PathVariable Long userId) {
-        return ResponseEntity.ok(chatService.getChatRoomsForUser(userId));
+    public ResponseEntity<Integer> createRoom(@RequestBody @Valid ChatRequest.CreateRoom request) {
+        try {
+            ChatRoom room = chatService.createChatRoom(request);
+            return ResponseEntity.ok(room != null ? 2000 : 2001);
+        } catch (Exception e) {
+            return ResponseEntity.ok(2001);
+        }
     }
 
     @PostMapping("/message")
-    public ResponseEntity<ChatMessage> sendMessage(@RequestBody @Valid ChatRequest.SendMessage request) {
-        return ResponseEntity.ok(chatService.sendMessage(request.getRoomId(), request.getSenderId(), request.getMessage()));
+    public ResponseEntity<Integer> sendMessage(@RequestBody @Valid ChatRequest.SendMessage request) {
+        try {
+            ChatMessage message = chatService.sendMessage(request.getRoomId(), request.getSenderId(), request.getMessage());
+            return ResponseEntity.ok(message != null ? 2010 : 2011);
+        } catch (Exception e) {
+            return ResponseEntity.ok(2011);
+        }
     }
 
     @GetMapping("/room/{roomId}/messages")
-    public ResponseEntity<List<ChatMessage>> getMessages(@PathVariable Long roomId) {
-        return ResponseEntity.ok(chatService.getMessagesByRoom(roomId));
+    public ResponseEntity<?> getMessages(@PathVariable Long roomId) {
+        try {
+            List<ChatMessage> messages = chatService.getMessagesByRoom(roomId);
+            return ResponseEntity.ok(messages != null ? messages : 2021);
+        } catch (Exception e) {
+            return ResponseEntity.ok(2021);
+        }
     }
 
     @PostMapping("/block")
-    public ResponseEntity<Void> blockUser(@RequestBody @Valid ChatRequest.BlockUser request) {
-        chatService.blockUser(request.getBlockerId(), request.getBlockedUserId());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Integer> blockUser(@RequestBody @Valid ChatRequest.BlockUser request) {
+        try {
+            chatService.blockUser(request.getBlockerId(), request.getBlockedUserId());
+            return ResponseEntity.ok(2030);
+        } catch (Exception e) {
+            return ResponseEntity.ok(2031);
+        }
     }
 
-    @PostMapping("/mute")
-    public ResponseEntity<Void> muteUser(@RequestBody @Valid ChatRequest.MuteUser request) {
-        chatService.muteUser(request.getMuterId(), request.getMutedUserId());
-        return ResponseEntity.ok().build();
+
+    @PostMapping("/room/leave")
+    public ResponseEntity<Integer> leaveRoom(@RequestParam Long roomId, @RequestParam Long userId) {
+        try {
+            chatService.leaveChatRoom(roomId, userId);
+            return ResponseEntity.ok(2050);
+        } catch (Exception e) {
+            return ResponseEntity.ok(2051);
+        }
     }
 }

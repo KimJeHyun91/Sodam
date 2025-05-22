@@ -1,8 +1,8 @@
 package com.sodam.entity;
 
-import com.sodam.enums.ChatRoomType;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,19 +10,17 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatRoom {
+public class ChatRoomHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long createdBy;
-    private String title;
+    private Long chatRoomNo;
+    private Long userId;
 
-    @Enumerated(EnumType.STRING)
-    private ChatRoomType type;
+    private String receiveData;
 
     private LocalDateTime createdDate;
-
-    private boolean active = true; // ✅ 나가기 시 비활성 처리
+    private LocalDateTime lastModifiedDate;
 }

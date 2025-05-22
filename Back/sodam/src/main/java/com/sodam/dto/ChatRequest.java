@@ -2,15 +2,28 @@ package com.sodam.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import java.util.List;
 
 public class ChatRequest {
 
     @Data
     public static class CreateRoom {
         @NotNull
-        private Long userAId;
+        private Long createdBy;
+
         @NotNull
-        private Long userBId;
+        private String type;
+
+        private String title;
+
+        private List<ParticipantDTO> participants;
+    }
+
+    @Data
+    public static class ParticipantDTO {
+        @NotNull
+        private Long userId;
+        private String nickName;
     }
 
     @Data
