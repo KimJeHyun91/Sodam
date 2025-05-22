@@ -45,6 +45,8 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const HelpPage()),
               );
             }),
+            const Spacer(),
+            _logoutButton(context),
           ],
         ),
       ),
@@ -67,4 +69,30 @@ class SettingsPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _logoutButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // 로그아웃 처리 (필요하다면 토큰 삭제 등 추가)
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainPage()), // ← 처음 화면으로 이동
+              (route) => false, // 스택 전부 제거
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 24),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: const Text(
+          "로그아웃",
+          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
 }

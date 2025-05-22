@@ -75,6 +75,15 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  fonts:
+    - family: EBSHunminjeongeum
+      fonts:
+        - asset: lib/assets/fonts/EBSHunminjeongeumL.ttf
+          weight: 300
+        - asset: lib/assets/fonts/EBSHunminjeongeumR.ttf
+          weight: 400
+        - asset: lib/assets/fonts/EBSHunminjeongeumSB.ttf
+          weight: 600
   # fonts:
   #   - family: Schyler
   #     fonts:
