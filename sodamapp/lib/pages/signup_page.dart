@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main_page.dart';
+import 'package:dio/dio.dart';
+
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -18,6 +20,40 @@ class _SignupPageState extends State<SignupPage> {
   final _nicknameController = TextEditingController();
   final _birthController = TextEditingController();
   final _emailController = TextEditingController();
+
+  // Dio 인스턴스 생성
+  final dio = Dio();
+
+  void configureDio() {
+    // 기본 옵션 설정
+    dio.options.baseUrl = '127.0.0.1:8080'; // 기본 URL
+    dio.options.connectTimeout = Duration(seconds: 5); // 연결 타임아웃: 5초
+    dio.options.receiveTimeout = Duration(seconds: 3); // 응답 수신 타임아웃: 3초
+    dio.options.headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer YOUR_ACCESS_TOKEN', // 예시: 기본 인증 헤더
+    };
+    // dio.options.responseType = ResponseType.json; // 기본 응답 타입 (기본값은 json)
+  }
+
+  void main() {
+    configureDio();
+    // 이제 dio 인스턴스를 사용하여 API 호출
+  }
+
+  Future<void> postData() async {
+      Map<String, dynamic> member_info = {
+        'id': 'user01',
+        'password': 'user1234',
+        'email': 'user01@gmail.com',
+        'name': '나강아',
+        'birthday': '2000/01/01',
+        'nickname': '귀여운 고양이'
+      };
+      Response response = await dio.post('/member/add', data: member_info);
+      print(response.data);
+  }
+
 
   bool agree = false;
 
