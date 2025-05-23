@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main_page.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 
 class SignupPage extends StatefulWidget {
@@ -26,7 +27,7 @@ class _SignupPageState extends State<SignupPage> {
 
   void configureDio() {
     // 기본 옵션 설정
-    dio.options.baseUrl = '127.0.0.1:8080'; // 기본 URL
+    dio.options.baseUrl = '10.0.2.2:8080'; // 기본 URL
     dio.options.connectTimeout = Duration(seconds: 5); // 연결 타임아웃: 5초
     dio.options.receiveTimeout = Duration(seconds: 3); // 응답 수신 타임아웃: 3초
     dio.options.headers = {
@@ -41,19 +42,61 @@ class _SignupPageState extends State<SignupPage> {
     // 이제 dio 인스턴스를 사용하여 API 호출
   }
 
-  Future<void> postData() async {
-      Map<String, dynamic> member_info = {
-        'id': 'user01',
-        'password': 'user1234',
-        'email': 'user01@gmail.com',
-        'name': '나강아',
-        'birthday': '2000/01/01',
-        'nickname': '귀여운 고양이'
-      };
-      Response response = await dio.post('/member/add', data: member_info);
-      print(response.data);
-  }
 
+
+  Future<void> postData() async {
+    /*// 폼 유효성 검사
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }*/
+    // 개인정보 동의 여부 확인
+    if (!agree) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('개인정보 수집 및 이용에 동의해주세요.')),
+      );
+      return;
+    }
+
+    // 1. UUID 생성
+    var uuid = Uuid(); // Uuid 인스턴스 생성
+    String newUuid = uuid.v4(); // v4 방식의 UUID 생성 (가장 일반적)
+    // 또는 클래스 필드로 선언한 _uuidGenerator 사용:
+    // String newUuid = _uuidGenerator.v4();
+
+    // 컨트롤러에서 실제 데이터 가져오기
+    Map<String, dynamic> memberInfo = {
+      'id': _idController.text,
+      'password': _passwordController.text,
+      'email': _emailController.text,
+      'name': _nameController.text,
+      'birthday': _birthController.text,
+      'nickname': _nicknameController.text,
+      'uuid': newUuid, // 2. 생성된 UUID를 member_info에 추가
+      // 'authorization': 'U', // 서버에서 기본값을 설정하거나, 클라이언트에서 명시적으로 보낼 수 있습니다.
+      // MemberDomain.java에는 authorization 필드가 있으므로 필요시 전송해야 합니다.
+      // 기본값 'U'를 보내려면 주석 해제하세요.
+    };
+
+    // 로딩 인디케이터 보여주기 (선택 사항)
+    // 예: showDialog(context: context, builder: (_) => Center(child: CircularProgressIndicator()));
+
+
+    Response response = await dio.post(
+        '/member/add', // 서버의 회원가입 API 엔드포인트
+        data: memberInfo
+    );
+    print('Signup Success: ${response.data}');
+    print('Generated UUID for user ${_idController.text}: $newUuid'); // 디버깅용 출력
+
+    // 로딩 인디케이터 숨기기 (선택 사항)
+    // if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+
+    // 성공 시 다음 페이지로 이동 또는 사용자에게 성공 알림
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MainPage()),
+    );
+  }
 
   bool agree = false;
 
@@ -218,6 +261,7 @@ class _SignupPageState extends State<SignupPage> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () {
+                      print(_passwordController);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => const MainPage()),

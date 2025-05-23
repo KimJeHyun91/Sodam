@@ -45,9 +45,6 @@ public class MemberDomain {
 	@ColumnDefault("'U'")
     @Check(constraints = "\"authorization\" IN ('U', 'A')")
 	private Character authorization;
-	@NotNull
-	@Column(nullable=false)
-	private String uuid;
 	@CreatedDate
 	private LocalDateTime created_date;
 	@LastModifiedDate

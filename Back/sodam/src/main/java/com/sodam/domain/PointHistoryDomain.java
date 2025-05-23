@@ -29,35 +29,17 @@ import lombok.NoArgsConstructor;
 public class PointHistoryDomain {
 	@EmbeddedId
 	private PointHistoryId point_history_id;
-	
-	@ManyToOne(fetch=FetchType.LAZY)
-	@MapsId("point_no")
-	@JoinColumn(
-			name="point_no", 
-			referencedColumnName="point_no",
-			nullable=false
-	)
-	private PointDomain point_domain;
 	@NotNull
 	@Column(nullable=false)
 	private Long change;
 	@NotNull
 	@Column(nullable=false)
-	@ColumnDefault("false")
-	private Boolean point_increase;
-	@NotNull
-	@Column(nullable=false)
-	@ColumnDefault("false")
-	private Boolean point_decrease;
+	@ColumnDefault("'M'") // Plus:P Minus:M
+	private Character point_plus_minus;
 	@CreatedDate
 	private LocalDateTime created_date;
 	@NotNull
-	@ManyToOne(fetch=FetchType.LAZY)
-	@MapsId("point_change_reason_code")
-	@JoinColumn(name="point_change_reason_code", referencedColumnName="point_change_reason_code")
-	private PointChangeReasonDomain point_change_reason_domain;
-	
-	
-	
-	
+	@Column(nullable=false)
+	private String point_change_reason_code;
+
 }

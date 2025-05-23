@@ -35,4 +35,8 @@ public class MemberService {
 		return member_repository.findById(id);
 	}
 
+	public Optional<MemberDomain> get_member_object(String id) {
+		return member_repository.findById(id);
+	}
+
 }
