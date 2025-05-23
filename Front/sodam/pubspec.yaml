@@ -31,6 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_blue_plus: ^1.9.3
+  dio: ^5.4.3+1 # 항상 최신 안정 버전을 확인하고 사용하세요.
+  uuid: ^4.3.3  # 최신 버전 기준
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

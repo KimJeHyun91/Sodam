@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main_page.dart';
 import 'package:dio/dio.dart';
-
+import 'package:uuid/uuid.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -26,7 +26,8 @@ class _SignupPageState extends State<SignupPage> {
 
   void configureDio() {
     // 기본 옵션 설정
-    dio.options.baseUrl = '127.0.0.1:8080'; // 기본 URL
+    // dio.options.baseUrl = 'http://127.0.0.1:8080'; // 기본 URL
+    dio.options.baseUrl = 'http://10.0.2.2:8080';
     dio.options.connectTimeout = Duration(seconds: 5); // 연결 타임아웃: 5초
     dio.options.receiveTimeout = Duration(seconds: 3); // 응답 수신 타임아웃: 3초
     dio.options.headers = {
@@ -36,30 +37,62 @@ class _SignupPageState extends State<SignupPage> {
     // dio.options.responseType = ResponseType.json; // 기본 응답 타입 (기본값은 json)
   }
 
-  void main() {
+  // void main() {
+  //   configureDio();
+  //   // 이제 dio 인스턴스를 사용하여 API 호출
+  // }
+  @override
+  void initState() {
+    super.initState();
     configureDio();
-    // 이제 dio 인스턴스를 사용하여 API 호출
   }
 
+
+
+  // Future<void> postData() async {
+  //     Map<String, dynamic> member_info = {
+  //       'id': 'user01',
+  //       'password': 'user1234',
+  //       'email': 'user01@gmail.com',
+  //       'name': '나강아',
+  //       'birthday': '2000/01/01',
+  //       'nickname': '귀여운 고양이'
+  //     };
+  //     Response response = await dio.post('/member/add', data: member_info);
+  //     print(response.data);
+  // }
   Future<void> postData() async {
-      Map<String, dynamic> member_info = {
-        'id': 'user01',
-        'password': 'user1234',
-        'email': 'user01@gmail.com',
-        'name': '나강아',
-        'birthday': '2000/01/01',
-        'nickname': '귀여운 고양이'
-      };
+    Map<String, dynamic> member_info = {
+      'id': _idController.text,
+      'password': _passwordController.text,
+      'email': _emailController.text,
+      'name': _nameController.text,
+      'birthday': _birthController.text,
+      'nickname': _nicknameController.text,
+      'authorization': 'U',
+      'uuid': const Uuid().v4(), // <- 꼭 이걸 추가했는지 확인!
+    };
+
+    try {
       Response response = await dio.post('/member/add', data: member_info);
       print(response.data);
+      // 성공 시 메인페이지로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+      );
+    } catch (e) {
+      print('회원가입 실패: $e');
+      // 에러 처리 UI도 추후 추가 가능
+    }
   }
 
 
   bool agree = false;
 
   // 가짜 중복 확인용
-  bool nicknameInUse = true;
-  bool emailInUse = true;
+  bool nicknameInUse = false;
+  bool emailInUse = false;
 
   @override
   void dispose() {
@@ -116,6 +149,7 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: true,
+                  onChanged: (_) => setState(() {}), // 이거 추가!
                   decoration: const InputDecoration(),
                 ),
                 if (_confirmPasswordController.text.isNotEmpty &&
@@ -217,11 +251,22 @@ class _SignupPageState extends State<SignupPage> {
                       backgroundColor: const Color(0xFFC9DAB2),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MainPage()),
-                      );
+                    // onPressed: () {
+                    //   print(_passwordController);
+                    //   Navigator.pushReplacement(
+                    //     context,
+                    //     MaterialPageRoute(builder: (_) => const MainPage()),
+                    //   );
+                    // },
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate() && agree) {
+                        await postData();
+                      } else {
+                        // 동의 안했거나 입력 유효성 미달 시 처리
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('모든 항목을 올바르게 입력해주세요.')),
+                        );
+                      }
                     },
                     child: const Text(
                       '가입완료',
