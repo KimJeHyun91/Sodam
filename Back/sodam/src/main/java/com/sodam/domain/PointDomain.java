@@ -42,13 +42,8 @@ public class PointDomain {
 	@LastModifiedDate
 	private LocalDateTime last_modified_date;
 	@NotNull
-	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "id",
-        referencedColumnName = "id",
-        nullable = false
-    )
-	private MemberDomain member_domain;
+	@Column(nullable=false)
+	private String id;
 	
 	
 
