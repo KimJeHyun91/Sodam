@@ -1,11 +1,8 @@
 package com.sodam.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import com.sodam.domain.MemberDomain;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Repository
-public interface MemberRepository extends JpaRepository<MemberDomain, String>{
-
+public interface MemberRepository extends JpaRepository<MemberDomain, String> {
+    boolean existsByEmail(String email); // ✅ 필수!
 }

@@ -1,8 +1,10 @@
 package com.sodam.dto;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import java.util.List;
 
 public class ChatRequest {
 
@@ -51,4 +53,22 @@ public class ChatRequest {
         @NotNull
         private Long mutedUserId;
     }
+    @Data
+    public static class SyncMessage {
+        @NotNull
+        private Long roomId;
+
+        @NotNull
+        private Long senderId;
+
+        @NotNull
+        private String message;
+
+        @NotNull
+        private String uuid;
+
+        @NotNull
+        private LocalDateTime sentAt;
+    }
+
 }

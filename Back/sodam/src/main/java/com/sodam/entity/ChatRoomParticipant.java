@@ -19,4 +19,5 @@ public class ChatRoomParticipant {
     private Long userId;
     private String nickName;
     private LocalDateTime joinedAt;
+    private LocalDateTime lastPing;
 }
