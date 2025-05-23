@@ -3,7 +3,7 @@ import 'edit_profile_page.dart';
 import 'theme_setting_page.dart';
 import 'notification_setting_page.dart';
 import 'help_page.dart';
-//import 'package:sodam_test/intro_page.dart';
+import '../../intro_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -75,12 +75,12 @@ class SettingsPage extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // 로그아웃 처리 (필요하다면 토큰 삭제 등 추가)
-        /*Navigator.pushAndRemoveUntil(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const IntroPage()),
           // ← 처음 화면으로 이동
               (route) => false, // 스택 전부 제거
-        );*/
+        );
       },
       child: Container(
         width: double.infinity,
