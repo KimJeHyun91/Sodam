@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+// import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,18 +57,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _pickImage();
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.folder),
-                title: const Text('파일에서 선택'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final result = await FilePicker.platform.pickFiles(type: FileType.image);
-                  if (result != null) {
-                    final file = File(result.files.single.path!);
-                    // 처리
-                  }
-                },
-              ),
+              // ListTile(
+              //   leading: const Icon(Icons.folder),
+              //   title: const Text('파일에서 선택'),
+              //   onTap: () async {
+              //     Navigator.pop(context);
+              //     final result = await FilePicker.platform.pickFiles(type: FileType.image);
+              //     if (result != null && result.files.single.path != null) {
+              //       final file = File(result.files.single.path!);
+              //       setState(() {
+              //         _selectedImage = file;
+              //       });
+              //     }
+              //   },
+              // ),
               ListTile(
                 leading: const Icon(Icons.close),
                 title: const Text('취소'),
