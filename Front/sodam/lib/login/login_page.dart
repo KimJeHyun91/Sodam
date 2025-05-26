@@ -3,6 +3,8 @@ import 'package:sodam/main_page.dart';
 import 'find_id_page.dart';
 import 'reset_password_page.dart';
 import 'guest_warning_page.dart';
+import 'package:sodam/dio_client.dart';
+import 'package:dio/dio.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,6 +24,36 @@ class _LoginPageState extends State<LoginPage> {
     _idController.dispose();
     _pwController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    final id = _idController.text;
+    final pw = _pwController.text;
+
+    try {
+      final response = await DioClient.dio.get(
+        '/member/login',
+        queryParameters: {
+          'id': id,
+          'password': pw,
+        },
+      );
+
+      if (response.data == 1020) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+        );
+      } else {
+        setState(() {
+          loginError = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        loginError = true;
+      });
+    }
   }
 
   @override
@@ -146,21 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () {
-                    final id = _idController.text;
-                    final pw = _pwController.text;
-
-                    if (id == 'sodam' && pw == '1234') {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MainPage()),
-                      );
-                    } else {
-                      setState(() {
-                        loginError = true;
-                      });
-                    }
-                  },
+                  onPressed: _login,
                   child: const Text(
                     '접속',
                     style: TextStyle(color: Colors.black),
