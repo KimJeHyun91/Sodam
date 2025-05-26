@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'settings_page.dart';
-import '../store.dart';
-import '../collection.dart';
+import 'store.dart';
+import 'collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 // Dio 전역 설정
 final dio = Dio();
@@ -29,6 +30,14 @@ class _MyPageState extends State<MyPage> {
   String email = '';
   bool isLoading = true;
 
+  final Set<DateTime> _loginDates = {
+    DateTime(2025, 5, 1),
+    DateTime(2025, 5, 3),
+    DateTime(2025, 5, 6),
+  };
+
+  int _walletPoint = 0;
+
   @override
   void initState() {
     super.initState();
@@ -46,12 +55,20 @@ class _MyPageState extends State<MyPage> {
           nickname = '비회원';
           email = '로그인 필요';
           isLoading = false;
+          _walletPoint = 0; // 포인트도 초기화
         });
         return;
       }
 
-      Response response = await dio.get(
+      // 닉네임, 이메일
+      final response = await dio.get(
         '/member/get_member_object',
+        queryParameters: {'id': id},
+      );
+
+      // 포인트
+      final pointResponse = await dio.get(
+        '/point/get_info',
         queryParameters: {'id': id},
       );
 
@@ -59,12 +76,14 @@ class _MyPageState extends State<MyPage> {
         setState(() {
           nickname = response.data['nickname'] ?? '닉네임 없음';
           email = response.data['email'] ?? '이메일 없음';
+          _walletPoint = pointResponse.data['current_point'] ?? 0; // 포인트 설정
           isLoading = false;
         });
       } else {
         setState(() {
           nickname = '정보 없음';
           email = '정보 없음';
+          _walletPoint = 0;
           isLoading = false;
         });
       }
@@ -73,6 +92,7 @@ class _MyPageState extends State<MyPage> {
       setState(() {
         nickname = '에러';
         email = '불러오기 실패';
+        _walletPoint = 0;
         isLoading = false;
       });
     }
@@ -134,7 +154,7 @@ class _MyPageState extends State<MyPage> {
               const SizedBox(height: 12),
               _buildWallet(),
               const SizedBox(height: 12),
-              _buildAttendance(),
+              _buildCalendar(),
               const SizedBox(height: 12),
               _buildMarketButtons(),
             ],
@@ -152,53 +172,73 @@ class _MyPageState extends State<MyPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Text("지갑", style: TextStyle(fontSize: 16)),
-          SizedBox(height: 8),
-          Text("2,580 냥", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const Text("지갑", style: TextStyle(fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(
+            "$_walletPoint 냥",
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildAttendance() {
-    final today = DateTime.now();
-    final startOfWeek = today.subtract(Duration(days: today.weekday % 7));
-    final weekDates = List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
-
+  Widget _buildCalendar() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text("출석부", style: TextStyle(fontSize: 16)),
           const SizedBox(height: 12),
-          Text("${today.month}월", style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              Text("일"), Text("월"), Text("화"), Text("수"), Text("목"), Text("금"), Text("토"),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekDates.map((date) {
-              final isAttended = date.day == today.day;
-              return Column(
-                children: [
-                  Text("${date.day}", style: const TextStyle(fontSize: 14)),
-                  isAttended
-                      ? const Icon(Icons.star, color: Colors.amber, size: 20)
-                      : const SizedBox(height: 20),
-                ],
-              );
-            }).toList(),
+          SizedBox(
+            height: 420, // 월 전체 달력 보이게
+            child: TableCalendar(
+              firstDay: DateTime.utc(2025, 1, 1),
+              lastDay: DateTime.utc(2030, 12, 31),
+              focusedDay: DateTime.now(),
+              calendarFormat: CalendarFormat.month,
+              startingDayOfWeek: StartingDayOfWeek.sunday,
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextFormatter: (date, locale) => "${date.month}월",
+              ),
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: Colors.blueAccent,
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: BoxDecoration(
+                  color: Colors.amber,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              calendarBuilders: CalendarBuilders(
+                defaultBuilder: (context, day, focusedDay) {
+                  final isLoginDay = _loginDates.any((d) =>
+                  d.year == day.year && d.month == day.month && d.day == day.day);
+
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('${day.day}', style: const TextStyle(fontSize: 12)),
+                      const SizedBox(height: 4),
+                      isLoginDay
+                          ? const Icon(Icons.star, size: 16, color: Colors.amber)
+                          : const SizedBox(height: 16),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),

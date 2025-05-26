@@ -4,6 +4,7 @@ import 'theme_setting_page.dart';
 import 'notification_setting_page.dart';
 import 'help_page.dart';
 import '../../intro_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -73,14 +74,31 @@ class SettingsPage extends StatelessWidget {
 
   Widget _logoutButton(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // 로그아웃 처리 (필요하다면 토큰 삭제 등 추가)
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const IntroPage()),
-          // ← 처음 화면으로 이동
-              (route) => false, // 스택 전부 제거
+      onTap: () async {
+        final shouldLogout = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("로그아웃"),
+            content: const Text("정말 로그아웃하시겠습니까?"),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("취소")),
+              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("로그아웃")),
+            ],
+          ),
         );
+
+        if (shouldLogout == true) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('loggedInId');
+
+          if (context.mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const IntroPage()),
+                  (route) => false,
+            );
+          }
+        }
       },
       child: Container(
         width: double.infinity,
@@ -94,7 +112,10 @@ class SettingsPage extends StatelessWidget {
         child: const Text(
           "로그아웃",
           style: TextStyle(
-              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

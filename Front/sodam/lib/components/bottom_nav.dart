@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../chat/chat_page.dart';
 import '../game/game_page.dart';
-import '../mypage/my_page.dart';
+import '../pages/my_page_views/my_page.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;

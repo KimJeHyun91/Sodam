@@ -5,24 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="11ea4fb2-5d32-4e24-9114-6ec67a3dca08" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/.log" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.projects/.org.eclipse.egit.core.cmp/.location" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.projects/.org.eclipse.egit.core.cmp/.location" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.egit.core.prefs" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.egit.core.prefs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.jdt.ui.prefs" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.jdt.ui.prefs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.ui.ide.prefs" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.ui.ide.prefs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.jdt.core/variablesAndContainers.dat" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.jdt.core/variablesAndContainers.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.ui.workbench/workingsets.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.ui.workbench/workingsets.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/version.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/version.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/sodam/src/main/java/com/sodam/controller/MemberController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Back/sodam/src/main/java/com/sodam/controller/MemberController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/sodam/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Back/sodam/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/login_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/pages/login_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/components/bottom_nav.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/components/bottom_nav.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/game/ddakji_intro.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/game/ddakji_intro.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/collection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/collection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/edit_profile_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/help_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/my_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/notification_setting_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/settings_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/store.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/store.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/mypage/theme_setting_page.dart" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/my_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/my_page.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/settings_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/settings_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/pubspec.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/pubspec.yaml" afterDir="false" />
     </list>
@@ -46,23 +46,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Flutter.main.dart.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "김기찬",
-    "io.flutter.reload.alreadyRun": "true",
-    "kotlin-language-version-configured": "true",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Flutter.main.dart.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;김기찬&quot;,
+    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views" />
+      <recent name="$PROJECT_DIR$/Front/sodam/lib/mypage" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter" temporary="true" nameIsGenerated="true">
       <option name="filePath" value="$PROJECT_DIR$/Front/sodam/lib/main.dart" />
