@@ -2,7 +2,6 @@ package com.sodam.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -11,7 +10,7 @@ public class ChatRequest {
     @Data
     public static class CreateRoom {
         @NotNull
-        private Long createdBy;
+        private String createdBy; // 접속이름
 
         @NotNull
         private String type;
@@ -24,7 +23,8 @@ public class ChatRequest {
     @Data
     public static class ParticipantDTO {
         @NotNull
-        private Long userId;
+        private String userId; // 접속이름
+        @NotNull
         private String nickName;
     }
 
@@ -33,7 +33,7 @@ public class ChatRequest {
         @NotNull
         private Long roomId;
         @NotNull
-        private Long senderId;
+        private String senderId;
         @NotNull
         private String message;
     }
@@ -41,25 +41,26 @@ public class ChatRequest {
     @Data
     public static class BlockUser {
         @NotNull
-        private Long blockerId;
+        private String blockerId;
         @NotNull
-        private Long blockedUserId;
+        private String blockedUserId;
     }
 
     @Data
     public static class MuteUser {
         @NotNull
-        private Long muterId;
+        private String muterId;
         @NotNull
-        private Long mutedUserId;
+        private String mutedUserId;
     }
+
     @Data
     public static class SyncMessage {
         @NotNull
         private Long roomId;
 
         @NotNull
-        private Long senderId;
+        private String senderId;
 
         @NotNull
         private String message;
@@ -70,5 +71,4 @@ public class ChatRequest {
         @NotNull
         private LocalDateTime sentAt;
     }
-
 }

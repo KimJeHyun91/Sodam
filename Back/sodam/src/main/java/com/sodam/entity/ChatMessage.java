@@ -14,13 +14,12 @@ public class ChatMessage {
     private Long id;
 
     private Long roomId;
-    private Long senderId;
+    private String senderId;
     private String message;
     private LocalDateTime sentAt;
 
     @Column(unique = true)
-    private String uuid; // 블루투스 메시지 고유 식별자
+    private String uuid;
 
-    private String origin; // 예: "bluetooth" or "server"
+    private String origin;
 }
-

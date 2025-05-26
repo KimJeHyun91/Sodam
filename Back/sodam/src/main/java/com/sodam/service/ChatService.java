@@ -4,9 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sodam.entity.ChatRoomHistory;
-import com.sodam.repository.ChatRoomHistoryRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +12,12 @@ import com.sodam.dto.ChatRequest;
 import com.sodam.entity.BlockedUser;
 import com.sodam.entity.ChatMessage;
 import com.sodam.entity.ChatRoom;
+import com.sodam.entity.ChatRoomHistory;
 import com.sodam.entity.ChatRoomParticipant;
 import com.sodam.enums.ChatRoomType;
 import com.sodam.repository.BlockedUserRepository;
 import com.sodam.repository.ChatMessageRepository;
+import com.sodam.repository.ChatRoomHistoryRepository;
 import com.sodam.repository.ChatRoomParticipantRepository;
 import com.sodam.repository.ChatRoomRepository;
 
@@ -67,7 +66,7 @@ public class ChatService {
     }
 
     // 메시지 전송
-    public ChatMessage sendMessage(Long roomId, Long senderId, String message) {
+    public ChatMessage sendMessage(Long roomId, String senderId, String message) {
         ChatRoom room = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("채팅방이 존재하지 않습니다."));
 
@@ -82,7 +81,7 @@ public class ChatService {
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setRoomId(roomId);
         chatMessage.setSenderId(senderId);
-        chatMessage.setMessage(message); // ✅ 메시지 저장 누락 주의
+        chatMessage.setMessage(message);
         chatMessage.setSentAt(LocalDateTime.now());
         return chatMessageRepository.save(chatMessage);
     }
@@ -91,7 +90,7 @@ public class ChatService {
         return chatMessageRepository.findByRoomIdOrderBySentAtAsc(roomId);
     }
 
-    public void blockUser(Long blockerId, Long blockedUserId) {
+    public void blockUser(String blockerId, String blockedUserId) {
         if (ChatDomain.isSelfBlock(blockerId, blockedUserId)) {
             throw new IllegalArgumentException("자기 자신을 차단할 수 없습니다.");
         }
@@ -100,8 +99,7 @@ public class ChatService {
         }
     }
 
-    // ✅ 채팅방 나가기 + 메시지 삭제
-    public void leaveChatRoom(Long chatRoomId, Long userId) {
+    public void leaveChatRoom(Long chatRoomId, String userId) {
         List<ChatRoomParticipant> participants = participantRepository.findByChatRoomId(chatRoomId);
         participantRepository.deleteAll(
             participants.stream().filter(p -> p.getUserId().equals(userId)).toList()
@@ -118,8 +116,7 @@ public class ChatService {
         }
     }
 
-    // ✅ 읽음 시간 업데이트
-    public void updateReadHistory(Long chatRoomId, Long userId, String data) {
+    public void updateReadHistory(Long chatRoomId, String userId, String data) {
         ChatRoomHistory history = chatRoomHistoryRepository
             .findByChatRoomNoAndUserId(chatRoomId, userId)
             .orElse(new ChatRoomHistory());
@@ -136,8 +133,7 @@ public class ChatService {
         chatRoomHistoryRepository.save(history);
     }
 
-    // ✅ 접속 ping 업데이트
-    public void updateLastPing(Long roomId, Long userId) {
+    public void updateLastPing(Long roomId, String userId) {
         List<ChatRoomParticipant> participants = participantRepository.findByChatRoomId(roomId);
         for (ChatRoomParticipant p : participants) {
             if (p.getUserId().equals(userId)) {
@@ -148,11 +144,11 @@ public class ChatService {
         }
     }
 
-    // ✅ 현재 접속 중인 인원
     public List<ChatRoomParticipant> getOnlineUsers(Long roomId) {
         LocalDateTime recent = LocalDateTime.now().minusMinutes(5);
         return participantRepository.findOnlineUsers(roomId, recent);
     }
+
     public ChatMessage syncMessage(ChatRequest.SyncMessage request) {
         if (chatMessageRepository.existsByUuid(request.getUuid())) {
             throw new IllegalStateException("이미 동기화된 메시지입니다.");
@@ -168,5 +164,4 @@ public class ChatService {
 
         return chatMessageRepository.save(msg);
     }
-
 }

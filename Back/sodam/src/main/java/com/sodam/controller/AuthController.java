@@ -1,10 +1,9 @@
 package com.sodam.controller;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.sodam.repository.MemberRepository;
 import com.sodam.service.EmailService;
@@ -24,6 +23,7 @@ public class AuthController {
         this.memberRepository = memberRepository;
     }
 
+    // ✅ 이메일 인증 토큰 발급
     @PostMapping("/email-token")
     public ResponseEntity<?> sendEmailToken(@RequestParam String email) {
         if (!memberRepository.existsByEmail(email)) {
@@ -34,6 +34,7 @@ public class AuthController {
         return ResponseEntity.ok("토큰이 이메일로 전송되었습니다.");
     }
 
+    // ✅ 이메일 인증 토큰 검증
     @PostMapping("/verify-token")
     public ResponseEntity<?> verifyEmailToken(@RequestParam String token) {
         if (!jwtUtil.isValidToken(token)) {
@@ -41,5 +42,12 @@ public class AuthController {
         }
         String email = jwtUtil.extractEmail(token);
         return ResponseEntity.ok("✅ 확인되었습니다: " + email);
+    }
+
+    // ✅ 접속자용 토큰 발급 (ID + nickName)
+    @PostMapping("/guest-token")
+    public ResponseEntity<?> issueGuestToken(@RequestParam String id, @RequestParam String nickName) {
+        String token = jwtUtil.generateTokenWithIdentity(id, nickName, 1000 * 60 * 60 * 24); // 24시간 유효
+        return ResponseEntity.ok(Map.of("token", token));
     }
 }

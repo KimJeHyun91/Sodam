@@ -15,10 +15,10 @@ public class ChatRoomHistory {
     private Long id;
 
     private Long chatRoomNo;
-    private Long userId;
+    private String userId; // 접속이름
 
     private String receiveData;
-
     private LocalDateTime createdDate;
     private LocalDateTime lastModifiedDate;
 }
+	

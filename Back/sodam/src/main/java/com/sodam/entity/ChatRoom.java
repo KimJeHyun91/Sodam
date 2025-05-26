@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRoom {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long createdBy;
+    private String createdBy; // String으로 변경 (접속이름)
+
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -24,5 +24,6 @@ public class ChatRoom {
 
     private LocalDateTime createdDate;
 
-    private boolean active = true; // ✅ 나가기 시 비활성 처리
+    private boolean active = true;
 }
+

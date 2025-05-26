@@ -13,8 +13,8 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
 
     List<ChatRoomParticipant> findByChatRoomId(Long chatRoomId);
 
-    List<ChatRoomParticipant> findByUserId(Long userId);
-    
+    List<ChatRoomParticipant> findByUserId(String userId);
+
     @Query("SELECT c FROM ChatRoomParticipant c WHERE c.chatRoomId = :roomId AND c.lastPing >= :since")
     List<ChatRoomParticipant> findOnlineUsers(@Param("roomId") Long roomId, @Param("since") LocalDateTime since);
 

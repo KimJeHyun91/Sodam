@@ -2,7 +2,6 @@ package com.sodam.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,7 +15,7 @@ public class ChatRoomParticipant {
     private Long id;
 
     private Long chatRoomId;
-    private Long userId;
+    private String userId; // 접속이름
     private String nickName;
     private LocalDateTime joinedAt;
     private LocalDateTime lastPing;

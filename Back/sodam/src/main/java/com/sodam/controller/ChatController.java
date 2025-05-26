@@ -21,7 +21,6 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
 
-    // 채팅방 생성
     @PostMapping("/room")
     public ResponseEntity<Integer> createRoom(@RequestBody @Valid ChatRequest.CreateRoom request) {
         try {
@@ -32,7 +31,6 @@ public class ChatController {
         }
     }
 
-    // 메시지 전송
     @PostMapping("/message")
     public ResponseEntity<Integer> sendMessage(@RequestBody @Valid ChatRequest.SendMessage request) {
         try {
@@ -43,7 +41,6 @@ public class ChatController {
         }
     }
 
-    // 채팅 내역 조회
     @GetMapping("/room/{roomId}/messages")
     public ResponseEntity<?> getMessages(@PathVariable Long roomId) {
         try {
@@ -54,7 +51,6 @@ public class ChatController {
         }
     }
 
-    // 유저 차단
     @PostMapping("/block")
     public ResponseEntity<Integer> blockUser(@RequestBody @Valid ChatRequest.BlockUser request) {
         try {
@@ -65,9 +61,8 @@ public class ChatController {
         }
     }
 
-    // 채팅방 나가기
     @PostMapping("/room/leave")
-    public ResponseEntity<Integer> leaveRoom(@RequestParam Long roomId, @RequestParam Long userId) {
+    public ResponseEntity<Integer> leaveRoom(@RequestParam Long roomId, @RequestParam String userId) {
         try {
             chatService.leaveChatRoom(roomId, userId);
             return ResponseEntity.ok(1450);
@@ -76,9 +71,8 @@ public class ChatController {
         }
     }
 
-    // 읽음 처리
     @PostMapping("/room/read")
-    public ResponseEntity<Integer> readRoom(@RequestParam Long roomId, @RequestParam Long userId) {
+    public ResponseEntity<Integer> readRoom(@RequestParam Long roomId, @RequestParam String userId) {
         try {
             chatService.updateReadHistory(roomId, userId, "읽음");
             return ResponseEntity.ok(1440);
@@ -87,7 +81,6 @@ public class ChatController {
         }
     }
 
-    // 접속자 확인
     @GetMapping("/room/{roomId}/online-users")
     public ResponseEntity<?> getOnlineUsers(@PathVariable Long roomId) {
         try {
@@ -97,7 +90,7 @@ public class ChatController {
             return ResponseEntity.ok(1461);
         }
     }
- // Bluetooth 메시지 동기화
+
     @PostMapping("/message/sync")
     public ResponseEntity<Integer> syncBluetoothMessage(@RequestBody @Valid ChatRequest.SyncMessage request) {
         try {
@@ -107,5 +100,4 @@ public class ChatController {
             return ResponseEntity.ok(1471);
         }
     }
-
 }

@@ -18,36 +18,33 @@ public class GameRoomController {
         this.gameRoomService = gameRoomService;
     }
 
-    // 게임방 생성
     @PostMapping("/create")
     public ResponseEntity<Integer> createRoom(@RequestBody GameRoomRequest request) {
         try {
-            gameRoomService.createRoom(request.getGameType(), request.getNickNames());
-            return ResponseEntity.ok(1300); // 성공
+            gameRoomService.createRoom(request.getGameType(), request.getParticipants());
+            return ResponseEntity.ok(1300);
         } catch (Exception e) {
-            return ResponseEntity.ok(1301); // 실패
+            return ResponseEntity.ok(1301);
         }
     }
 
-    // 게임방 상세 조회
     @GetMapping("/detail")
     public ResponseEntity<?> getRoomDetail(@RequestParam Long roomId) {
         try {
             GameRoomResponse response = gameRoomService.getRoomDetail(roomId);
-            return ResponseEntity.ok(response); // 데이터 반환
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.ok(1302); // 실패
+            return ResponseEntity.ok(1302);
         }
     }
 
-    // 전체 게임방 목록 조회
     @GetMapping("/list")
     public ResponseEntity<?> listRooms() {
         try {
             List<GameRoomResponse> responses = gameRoomService.getAllRooms();
-            return ResponseEntity.ok(responses); // 데이터 반환
+            return ResponseEntity.ok(responses);
         } catch (Exception e) {
-            return ResponseEntity.ok(1303); // 실패
+            return ResponseEntity.ok(1303);
         }
     }
 }
