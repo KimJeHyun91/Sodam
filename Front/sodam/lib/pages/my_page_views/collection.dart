@@ -8,11 +8,11 @@ class CollectionPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("수집"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -66,10 +66,10 @@ class CollectionPage extends StatelessWidget {
         itemBuilder: (context, index) {
           return Column(
             children: [
-              _collectionItem(rows[0][index], isText),
+              _collectionItem(context, rows[0][index], isText),
               const SizedBox(height: 12),
               if (index < rows[1].length)
-                _collectionItem(rows[1][index], isText),
+                _collectionItem(context, rows[1][index], isText),
             ],
           );
         },
@@ -77,13 +77,15 @@ class CollectionPage extends StatelessWidget {
     );
   }
 
-  Widget _collectionItem(dynamic data, bool isText) {
+  Widget _collectionItem(BuildContext context, dynamic data, bool isText) {
     return Container(
       margin: const EdgeInsets.only(right: 12),
       width: 80,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[850]
+            : Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       alignment: Alignment.center,

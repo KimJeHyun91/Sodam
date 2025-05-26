@@ -77,10 +77,13 @@ public class MemberController {
 			return 1010;
 		}
 		MemberDomain result_domain=result_optional.get();
-		boolean result_flag=password_encoder.matches(password, result_domain.getPassword());
-		if(result_flag) {
+		if(result_domain.getPassword().equals(password)) {
 			return 1020;
 		}
+//		boolean result_flag=password_encoder.matches(password, result_domain.getPassword());
+//		if(result_flag) {
+//			return 1020;
+//		}
 		return 1021;
 	}
 	

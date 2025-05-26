@@ -118,7 +118,9 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -278,6 +280,7 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
+    ),
     );
   }
 }
