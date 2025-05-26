@@ -202,7 +202,7 @@ class _MyPageState extends State<MyPage> {
                         children: [
                           const CircleAvatar(
                             radius: 100,
-                            backgroundImage: AssetImage('assets/images/profile.png'),
+                            backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
                           ),
                           const SizedBox(height: 20),
                           Text(nickname, style: const TextStyle(fontSize: 36)),

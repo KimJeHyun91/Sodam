@@ -1,6 +1,9 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -17,10 +20,65 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   bool isLoading = true;
 
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
     loadUserNickname();
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+      });
+    }
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text('사진 앨범에서 선택'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder),
+                title: const Text('파일에서 선택'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                  if (result != null) {
+                    final file = File(result.files.single.path!);
+                    // 처리
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('취소'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> loadUserNickname() async {
@@ -78,9 +136,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const CircleAvatar(
-                radius: 100,
-                backgroundImage: AssetImage('assets/images/profile.png'),
+              // const CircleAvatar(
+              //   radius: 100,
+              //   backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
+              // ),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 100,
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : const AssetImage('assets/images/gibon2.jpeg') as ImageProvider,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.camera_alt, size: 24),
+                        onPressed: _showPhotoOptions, // ✅ Bottom sheet 띄우기
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
