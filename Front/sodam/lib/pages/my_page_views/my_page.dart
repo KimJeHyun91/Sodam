@@ -37,6 +37,34 @@ class _MyPageState extends State<MyPage> {
   };
 
   int _walletPoint = 0;
+  Set<DateTime> _attendedDates = {};
+
+  Future<void> fetchAttendanceDates(String id) async {
+    try {
+      final response = await dio.get(
+        '/point/get_history_list',
+        queryParameters: {'id': id},
+      );
+
+      if (response.data is List) {
+        final List<dynamic> data = response.data;
+        final Set<DateTime> result = {};
+
+        for (final item in data) {
+          if (item['point_change_reason_code'] == 'attendence') {
+            final created = DateTime.parse(item['created_date']);
+            result.add(DateTime(created.year, created.month, created.day)); // 시분초 제거
+          }
+        }
+
+        setState(() {
+          _attendedDates = result;
+        });
+      }
+    } catch (e) {
+      print("출석 데이터 불러오기 실패: $e");
+    }
+  }
 
   @override
   void initState() {
@@ -45,50 +73,97 @@ class _MyPageState extends State<MyPage> {
     fetchData();
   }
 
+  // Future<void> fetchData() async {
+  //   try {
+  //     final prefs = await SharedPreferences.getInstance();
+  //     final id = prefs.getString('loggedInId');
+  //     if (id != null) {
+  //       await fetchAttendanceDates(id); // ✅ 출석 정보 불러오기
+  //     }
+  //
+  //     if (id == null) {
+  //       setState(() {
+  //         nickname = '비회원';
+  //         email = '로그인 필요';
+  //         isLoading = false;
+  //         _walletPoint = 0; // 포인트도 초기화
+  //       });
+  //       return;
+  //     }
+  //
+  //     // 닉네임, 이메일
+  //     final response = await dio.get(
+  //       '/member/get_member_object',
+  //       queryParameters: {'id': id},
+  //     );
+  //
+  //     // 포인트
+  //     final pointResponse = await dio.get(
+  //       '/point/get_info',
+  //       queryParameters: {'id': id},
+  //     );
+  //
+  //     if (response.data is Map<String, dynamic>) {
+  //       setState(() {
+  //         nickname = response.data['nickname'] ?? '닉네임 없음';
+  //         email = response.data['email'] ?? '이메일 없음';
+  //         _walletPoint = pointResponse.data['current_point'] ?? 0; // 포인트 설정
+  //         isLoading = false;
+  //       });
+  //     } else {
+  //       setState(() {
+  //         nickname = '정보 없음';
+  //         email = '정보 없음';
+  //         _walletPoint = 0;
+  //         isLoading = false;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print('회원 정보 로딩 실패: $e');
+  //     setState(() {
+  //       nickname = '에러';
+  //       email = '불러오기 실패';
+  //       _walletPoint = 0;
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
   Future<void> fetchData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getString('loggedInId');
 
-      if (id == null) {
+      if (id == null || id.isEmpty) {
         setState(() {
           nickname = '비회원';
           email = '로그인 필요';
           isLoading = false;
-          _walletPoint = 0; // 포인트도 초기화
+          _walletPoint = 0;
         });
         return;
       }
 
-      // 닉네임, 이메일
-      final response = await dio.get(
-        '/member/get_member_object',
-        queryParameters: {'id': id},
-      );
+      await fetchAttendanceDates(id); // ✅ 출석 정보
 
-      // 포인트
-      final pointResponse = await dio.get(
-        '/point/get_info',
-        queryParameters: {'id': id},
-      );
+      final response = await dio.get('/member/get_member_object', queryParameters: {'id': id});
+      final pointResponse = await dio.get('/point/get_info', queryParameters: {'id': id});
 
-      if (response.data is Map<String, dynamic>) {
-        setState(() {
-          nickname = response.data['nickname'] ?? '닉네임 없음';
-          email = response.data['email'] ?? '이메일 없음';
-          _walletPoint = pointResponse.data['current_point'] ?? 0; // 포인트 설정
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          nickname = '정보 없음';
-          email = '정보 없음';
-          _walletPoint = 0;
-          isLoading = false;
-        });
-      }
+      print("👤 member response: ${response.data}");
+      print("💰 point response: ${pointResponse.data}");
+
+      final memberData = response.data;
+      final pointData = pointResponse.data;
+
+      setState(() {
+        nickname = memberData['nickname'] ?? '닉네임 없음';
+        email = memberData['email'] ?? '이메일 없음';
+        _walletPoint = (pointData is Map && pointData['current_point'] != null)
+            ? pointData['current_point']
+            : 0;
+        isLoading = false;
+      });
     } catch (e) {
-      print('회원 정보 로딩 실패: $e');
+      print('❌ 회원 정보 로딩 실패: $e');
       setState(() {
         nickname = '에러';
         email = '불러오기 실패';
@@ -101,7 +176,7 @@ class _MyPageState extends State<MyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: SafeArea(
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -114,7 +189,9 @@ class _MyPageState extends State<MyPage> {
                 width: double.infinity,
                 height: 380,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[850]
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Stack(
@@ -169,7 +246,9 @@ class _MyPageState extends State<MyPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[850]
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -190,7 +269,9 @@ class _MyPageState extends State<MyPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[850]
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -223,15 +304,16 @@ class _MyPageState extends State<MyPage> {
               ),
               calendarBuilders: CalendarBuilders(
                 defaultBuilder: (context, day, focusedDay) {
-                  final isLoginDay = _loginDates.any((d) =>
-                  d.year == day.year && d.month == day.month && d.day == day.day);
+                  final isAttended = _attendedDates.contains(
+                    DateTime(day.year, day.month, day.day),
+                  );
 
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text('${day.day}', style: const TextStyle(fontSize: 12)),
                       const SizedBox(height: 4),
-                      isLoginDay
+                      isAttended
                           ? const Icon(Icons.star, size: 16, color: Colors.amber)
                           : const SizedBox(height: 16),
                     ],
@@ -254,7 +336,9 @@ class _MyPageState extends State<MyPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[850]
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               alignment: Alignment.center,
@@ -269,7 +353,9 @@ class _MyPageState extends State<MyPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[850]
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               alignment: Alignment.center,

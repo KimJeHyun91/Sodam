@@ -20,11 +20,11 @@ class _NotificationSettingPageState extends State<NotificationSettingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("알림"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -39,12 +39,14 @@ class _NotificationSettingPageState extends State<NotificationSettingPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[850]
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 "알림음 (${selectedSound})",
-                style: const TextStyle(fontSize: 16, color: Colors.black),  textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),  textAlign: TextAlign.center,
               ),
             ),
             const SizedBox(height: 16),
@@ -56,7 +58,9 @@ class _NotificationSettingPageState extends State<NotificationSettingPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[850]
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -85,7 +89,9 @@ class _NotificationSettingPageState extends State<NotificationSettingPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[850]
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

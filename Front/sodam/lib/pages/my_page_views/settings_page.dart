@@ -6,46 +6,64 @@ import 'help_page.dart';
 import '../../intro_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool isGuest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isGuest = prefs.getString('loggedInId') == null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("손보기"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _settingItem("회원정보수정", onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditProfilePage()),
-              );
+            _settingItem(
+              context,
+              "회원정보수정",
+              enabled: !isGuest,
+              onTap: isGuest
+                  ? null
+                  : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                );
+              },
+            ),
+            _settingItem(context, "화면", onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ThemeSettingPage()));
             }),
-            _settingItem("화면", onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ThemeSettingPage()),
-              );
+            _settingItem(context, "알림", onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingPage()));
             }),
-            _settingItem("알림", onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationSettingPage()),
-              );
-            }),
-            _settingItem("도움방", onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HelpPage()),
-              );
+            _settingItem(context, "도움방", onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpPage()));
             }),
             const Spacer(),
             _logoutButton(context),
@@ -55,19 +73,28 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _settingItem(String title, {VoidCallback? onTap}) {
+  Widget _settingItem(BuildContext context, String title, {VoidCallback? onTap, bool enabled = true}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: enabled
+              ? (isDark ? Colors.grey[850] : Colors.white)
+              : Colors.grey[400],
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
-        child: Text(title, style: const TextStyle(fontSize: 16)),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            color: enabled ? Theme.of(context).textTheme.bodyMedium?.color : Colors.grey[700],
+          ),
+        ),
       ),
     );
   }

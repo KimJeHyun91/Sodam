@@ -8,11 +8,11 @@ class StorePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("장터"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -21,13 +21,13 @@ class StorePage extends StatelessWidget {
             const Text("배경", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             _horizontalItemScroll(context, [
-              _storeItem("assets/images/bg_pink.png", "100 냥"),
-              _storeItem("assets/images/bg_gray.png", "500 냥"),
-              _storeItem("assets/images/bg_gray.png", "500 냥"),
-              _storeItem("assets/images/bg_gray.png", "500 냥"),
-              _storeItem("assets/images/bg_gray.png", "500 냥"),
-              _storeItem("assets/images/bg_gray.png", "500 냥"),
-              _storeItem("assets/images/bg_gray.png", "500 냥"),
+              _storeItem(context, "assets/images/bg_pink.png", "100 냥"),
+              _storeItem(context, "assets/images/bg_gray.png", "500 냥"),
+              _storeItem(context, "assets/images/bg_gray.png", "500 냥"),
+              _storeItem(context, "assets/images/bg_gray.png", "500 냥"),
+              _storeItem(context, "assets/images/bg_gray.png", "500 냥"),
+              _storeItem(context, "assets/images/bg_gray.png", "500 냥"),
+              _storeItem(context, "assets/images/bg_gray.png", "500 냥"),
 
             ]),
 
@@ -36,13 +36,13 @@ class StorePage extends StatelessWidget {
             const Text("틀", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             _horizontalItemScroll(context, [
-              _storeItem("assets/images/face_rain.png", "1,000 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_rain.png", "1,000 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
 
             ]),
 
@@ -51,13 +51,13 @@ class StorePage extends StatelessWidget {
             const Text("딱지", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             _horizontalItemScroll(context, [
-              _storeItem("assets/images/face_rain.png", "1,000 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_rain.png", "1,000 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
 
             ]),
 
@@ -66,13 +66,13 @@ class StorePage extends StatelessWidget {
             const Text("직업", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             _horizontalItemScroll(context, [
-              _storeItem("assets/images/face_rain.png", "1,000 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
-              _storeItem("assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_rain.png", "1,000 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
+              _storeItem(context, "assets/images/face_gold.png", "1,500 냥"),
 
             ]),
           ],
@@ -93,12 +93,13 @@ class StorePage extends StatelessWidget {
     );
   }
 
-  Widget _storeItem(String imagePath, String price, {String? title}) {
+  Widget _storeItem(BuildContext context, String imagePath, String price, {String? title}) {
     return Container(
       width: 140,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[850]
+            : Colors.white,        borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
