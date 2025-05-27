@@ -12,10 +12,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,13 +23,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name="POINT_HISTORY")
+@Table(name="POINT_HISTORY", uniqueConstraints = {
+		@UniqueConstraint(columnNames = {"point_no", "point_history_no"}, name = "UK_POINT_HISTORY_POINT_NO_HISTORY_NO")
+})
 @EntityListeners(AuditingEntityListener.class)
 public class PointHistoryDomain {
 	@EmbeddedId
 	private PointHistoryId point_history_id;
 	@NotNull
 	@Column(nullable=false)
-	private Long change;
+	private Long change_amount;
 	@NotNull
 	@Column(nullable=false)
 	@ColumnDefault("'M'") // Plus:P Minus:M

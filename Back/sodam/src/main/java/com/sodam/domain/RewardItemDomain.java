@@ -26,12 +26,12 @@ import lombok.NoArgsConstructor;
 public class RewardItemDomain {
 	@Id
 	@SequenceGenerator(
-			name="a"
+			name="reward_item_sequence_generator"
 			, sequenceName="REWARD_ITEM_SEQUENCE"
 			, initialValue=1
 			, allocationSize=1
 	)
-	@GeneratedValue(generator="a")
+	@GeneratedValue(generator="reward_item_sequence_generator")
 	private Long reward_item_no;
 	@NotNull
 	@Column(name="\"reward_item_category\"", nullable=false)
@@ -53,7 +53,7 @@ public class RewardItemDomain {
 	@CreatedDate
 	private LocalDateTime created_date;
 	@LastModifiedDate
-	private LocalDateTime last_modifiec_date;
+	private LocalDateTime last_modified_date;
 	
 	
 	

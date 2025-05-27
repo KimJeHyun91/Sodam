@@ -28,12 +28,12 @@ import lombok.NoArgsConstructor;
 public class PointDomain {
 	@Id
 	@SequenceGenerator(
-			name="a"
-			, sequenceName="point_sequence"
+			name="point_sequence_generator"
+			, sequenceName="POINT_SEQUENCE"
 			, initialValue=1
 			, allocationSize=1
 	)
-	@GeneratedValue(generator="a")
+	@GeneratedValue(generator="point_sequence_generator")
 	private Long point_no;
 	@NotNull
 	@Column(nullable=false)

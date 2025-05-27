@@ -1,9 +1,12 @@
 package com.sodam.repository;
 
-import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.sodam.entity.ChatRoom;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
-    List<ChatRoom> findByUserAIdOrUserBId(Long userAId, Long userBId);
+
+	
+   
 }
