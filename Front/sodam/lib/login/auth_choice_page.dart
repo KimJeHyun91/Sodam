@@ -7,7 +7,10 @@ class AuthChoicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return
+      Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       backgroundColor: Colors.white, // 전체 배경 흰색
       body: SafeArea(
         child: Padding(
@@ -97,6 +100,7 @@ class AuthChoicePage extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

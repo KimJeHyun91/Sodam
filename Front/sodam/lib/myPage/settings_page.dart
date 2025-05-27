@@ -3,7 +3,7 @@ import 'edit_profile_page.dart';
 import 'theme_setting_page.dart';
 import 'notification_setting_page.dart';
 import 'help_page.dart';
-import '../../intro_page.dart';
+import '../intro_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {

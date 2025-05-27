@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/bottom_nav.dart';
+// import '../components/bottom_nav.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -14,7 +14,7 @@ class ChatPage extends StatelessWidget {
         elevation: 0,
       ),
       body: const Center(child: Text('담소 페이지')),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0), // ✅ 담소 탭
+      // bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0), // ✅ 담소 탭
     );
   }
 }
