@@ -13,11 +13,10 @@ public class BlockedUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long blockerId;
-    private Long blockedUserId;
+    private String blockerId;
+    private String blockedUserId;
 
-  
-    public BlockedUser(Long blockerId, Long blockedUserId) {
+    public BlockedUser(String blockerId, String blockedUserId) {
         this.blockerId = blockerId;
         this.blockedUserId = blockedUserId;
     }
