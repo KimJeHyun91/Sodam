@@ -1,11 +1,11 @@
 package com.sodam.domain;
 
 public class ChatDomain {
-    public static boolean isSelfBlock(Long blockerId, Long blockedUserId) {
+    public static boolean isSelfBlock(String blockerId, String blockedUserId) {
         return blockerId.equals(blockedUserId);
     }
 
-    public static boolean isSelfMute(Long muterId, Long mutedUserId) {
+    public static boolean isSelfMute(String muterId, String mutedUserId) {
         return muterId.equals(mutedUserId);
     }
 }
