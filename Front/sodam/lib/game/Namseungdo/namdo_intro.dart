@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sodam/style.dart';
-import '../components/bottom_nav.dart';
-import 'select_user.dart';
+import '../../components/bottom_nav.dart';
+import '../select_user.dart';
 
-class SangajiIntroPage extends StatelessWidget {
-  const SangajiIntroPage({super.key});
+class NamdoIntroPage extends StatelessWidget {
+  const NamdoIntroPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class SangajiIntroPage extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/sangaji.png', fit: BoxFit.cover),
+            child: Image.asset('assets/namdo.png', fit: BoxFit.cover),
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -24,7 +24,7 @@ class SangajiIntroPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const SelectUserPage(gameTitle: '산가지'),
+                      builder: (_) => const SelectUserPage(gameTitle: '남승도'),
                     ),
                   );
                 },
