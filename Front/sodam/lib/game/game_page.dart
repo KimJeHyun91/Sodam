@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../components/bottom_nav.dart';
-import '../game/ddakji_intro.dart';
-import '../game/sangaji_intro.dart'; // ✅ 추가
-import '../game/namdo_intro.dart';  // ✅ 추가
+import 'ttagji/ttagji_intro.dart';
+import 'Namseungdo/namdo_intro.dart';
+import 'biseok/biseok_intro.dart';
+import 'paeng-i/pang_intro.dart'; // ✅ 팽이치기 intro 페이지 import
 
 class GamePage extends StatelessWidget {
   const GamePage({super.key});
@@ -12,8 +13,8 @@ class GamePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('놀이'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: Padding(
@@ -23,9 +24,11 @@ class GamePage extends StatelessWidget {
           children: [
             _gameButton(context, '딱지치기'),
             const SizedBox(height: 12),
-            _gameButton(context, '산가지'),
-            const SizedBox(height: 12),
             _gameButton(context, '남승도'),
+            const SizedBox(height: 12),
+            _gameButton(context, '비석치기'),
+            const SizedBox(height: 12),
+            _gameButton(context, '팽이치기'), // ✅ 팽이치기만 유지
           ],
         ),
       ),
@@ -39,17 +42,22 @@ class GamePage extends StatelessWidget {
         if (title == '딱지치기') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const DdakjiIntroPage()),
-          );
-        } else if (title == '산가지') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SangajiIntroPage()),
+            MaterialPageRoute(builder: (_) => const TtagjiIntroPage()),
           );
         } else if (title == '남승도') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const NamdoIntroPage()),
+          );
+        } else if (title == '비석치기') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BiseokIntroPage()),
+          );
+        } else if (title == '팽이치기') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PangIntroPage()),
           );
         }
       },
