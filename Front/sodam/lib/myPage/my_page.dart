@@ -5,18 +5,8 @@ import 'store.dart';
 import 'collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
-
-// Dio 전역 설정
-final dio = Dio();
-
-void configureDio() {
-  dio.options.baseUrl = 'http://10.0.2.2:8080'; // 에뮬레이터용
-  dio.options.connectTimeout = const Duration(seconds: 5);
-  dio.options.receiveTimeout = const Duration(seconds: 3);
-  dio.options.headers = {
-    'Content-Type': 'application/json; charset=UTF-8',
-  };
-}
+import '../components/bottom_nav.dart';
+import 'package:sodam/dio_client.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -41,7 +31,7 @@ class _MyPageState extends State<MyPage> {
 
   Future<void> fetchAttendanceDates(String id) async {
     try {
-      final response = await dio.get(
+      final response = await DioClient.dio.get(
         '/point/get_history_list',
         queryParameters: {'id': id},
       );
@@ -69,7 +59,6 @@ class _MyPageState extends State<MyPage> {
   @override
   void initState() {
     super.initState();
-    configureDio();
     fetchData();
   }
 
@@ -145,8 +134,8 @@ class _MyPageState extends State<MyPage> {
 
       await fetchAttendanceDates(id); // ✅ 출석 정보
 
-      final response = await dio.get('/member/get_member_object', queryParameters: {'id': id});
-      final pointResponse = await dio.get('/point/get_info', queryParameters: {'id': id});
+      final response = await DioClient.dio.get('/member/get_member_object', queryParameters: {'id': id});
+      final pointResponse = await DioClient.dio.get('/point/get_info', queryParameters: {'id': id});
 
       print("👤 member response: ${response.data}");
       print("💰 point response: ${pointResponse.data}");
@@ -238,6 +227,7 @@ class _MyPageState extends State<MyPage> {
           ),
         ),
       ),
+      bottomNavigationBar: CustomBottomNavBar(currentIndex: 2),
     );
   }
 

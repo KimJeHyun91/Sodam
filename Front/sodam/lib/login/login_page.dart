@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
-import '../main_page.dart';
+import 'package:sodam/main_page.dart';
+import 'find_id_page.dart';
+import 'reset_password_page.dart';
+import 'guest_warning_page.dart';
+import 'package:sodam/dio_client.dart';
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-final dio = Dio();
-
-void configureDio() {
-  // 기본 옵션 설정
-  dio.options.baseUrl = 'http://10.0.2.2:8080'; // 기본 URL
-  dio.options.connectTimeout = Duration(seconds: 5); // 연결 타임아웃: 5초
-  dio.options.receiveTimeout = Duration(seconds: 3); // 응답 수신 타임아웃: 3초
-  dio.options.headers = {
-    'Content-Type': 'application/json; charset=UTF-8',
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN', // 예시: 기본 인증 헤더
-  };
-}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,16 +16,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _idController = TextEditingController();
   final _pwController = TextEditingController();
-
-
   bool autoLogin = false;
   bool loginError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    configureDio(); // 여기에 추가
-  }
 
   @override
   void dispose() {
@@ -44,11 +26,39 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _login() async {
+    final id = _idController.text;
+    final pw = _pwController.text;
+
+    try {
+      final response = await DioClient.dio.get(
+        '/member/login',
+        queryParameters: {
+          'id': id,
+          'password': pw,
+        },
+      );
+
+      if (response.data == 1020) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+        );
+      } else {
+        setState(() {
+          loginError = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        loginError = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Theme(
-        data: ThemeData.light().copyWith(brightness: Brightness.light),
-    child: Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -97,19 +107,42 @@ class _LoginPageState extends State<LoginPage> {
 
                     // 자동로그인 체크박스
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Checkbox(
-                          value: autoLogin,
-                          onChanged: (val) => setState(() => autoLogin = val ?? false),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const FindIdPage()),
+                            );
+                          },
+                          child: const Text(
+                            '접속이름',
+                            style: TextStyle(
+                              decoration: TextDecoration.underline,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                        const Text('자동로그인'),
-                        const Spacer(),
-                        const Text(
-                          '접속이름 / 비밀번호 찾기',
-                          style: TextStyle(decoration: TextDecoration.underline),
+                        const Text(' / '),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ResetPasswordPage()),
+                            );
+                          },
+                          child: const Text(
+                            '비밀번호 찾기',
+                            style: TextStyle(
+                              decoration: TextDecoration.underline,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ],
                     ),
+
                   ],
                 ),
               ),
@@ -127,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const MainPage()),
+                      MaterialPageRoute(builder: (_) => const GuestWarningPage()),
                     );
                   },
                   child: const Text('비회원 접속'),
@@ -145,22 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                    onPressed: () async {
-                      final id = _idController.text;
-                      final pw = _pwController.text;
-
-                      final success = await tryLogin(id, pw);
-                      if (success) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const MainPage()),
-                        );
-                      } else {
-                        setState(() {
-                          loginError = true;
-                        });
-                      }
-                    },
+                  onPressed: _login,
                   child: const Text(
                     '접속',
                     style: TextStyle(color: Colors.black),
@@ -171,32 +189,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-    ),
     );
-  }
-  Future<bool> tryLogin(String id, String password) async {
-    try {
-      final res = await dio.get(
-        '/member/login',
-        queryParameters: {
-          'id': id,
-          'password': password,
-        },
-      );
-
-      print('로그인 응답값: ${res.data}'); // 디버깅용
-
-      // 백엔드에서 1020이면 로그인 성공
-      if (res.data == 1020) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('loggedInId', id);
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      print('로그인 오류: $e');
-      return false;
-    }
   }
 }

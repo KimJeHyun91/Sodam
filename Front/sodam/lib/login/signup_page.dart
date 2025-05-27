@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../main_page.dart';
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
-
+import 'login_page.dart';
+import '/dio_client.dart';
+import 'dart:async';
+import 'package:flutter/services.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -21,88 +22,295 @@ class _SignupPageState extends State<SignupPage> {
   final _nicknameController = TextEditingController();
   final _birthController = TextEditingController();
   final _emailController = TextEditingController();
+  final _emailCodeController = TextEditingController();
 
-  // Dio 인스턴스 생성
-  final dio = Dio();
+  bool agree = false;
+  bool idAvailable = false;
+  bool idChecked = false;
+  bool idValid = false;
+  bool passwordValid = false;
+  bool passwordConfirmed = false;
+  bool nicknameInUse = false;
+  bool emailInUse = false;
+  bool _isFormatting = false;
 
-  void configureDio() {
-    // 기본 옵션 설정
-    dio.options.baseUrl = '10.0.2.2:8080'; // 기본 URL
-    dio.options.connectTimeout = Duration(seconds: 5); // 연결 타임아웃: 5초
-    dio.options.receiveTimeout = Duration(seconds: 3); // 응답 수신 타임아웃: 3초
-    dio.options.headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': 'Bearer YOUR_ACCESS_TOKEN', // 예시: 기본 인증 헤더
-    };
-    // dio.options.responseType = ResponseType.json; // 기본 응답 타입 (기본값은 json)
+  bool idTouched = false;
+  bool passwordTouched = false;
+  bool _birthTouched = false;
+
+  bool isPasswordTooSimilarToId(String id, String pw) {
+    for (int i = 0; i <= id.length - 4; i++) {
+      final slice = id.substring(i, i + 4);
+      if (pw.contains(slice)) return true;
+    }
+    return false;
   }
 
-  void main() {
-    configureDio();
-    // 이제 dio 인스턴스를 사용하여 API 호출
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _idController.addListener(_onIdChanged);
+    _passwordController.addListener(_onPasswordChanged);
+    _confirmPasswordController.addListener(_onPasswordConfirmChanged);
+    _nameController.addListener(_onNameChanged);
+    _nicknameController.addListener(_onNicknameChanged);
+    _birthController.addListener(_onBirthChanged);
   }
 
+  void _onIdChanged() {
+    final id = _idController.text.trim();
+    final idRegex = RegExp(r'^(?=.*[a-z])[a-z0-9]{6,15}$');
 
+    if (!idTouched && id.isNotEmpty) {
+      setState(() {
+        idTouched = true;
+      });
+    }
 
-  Future<void> postData() async {
-    /*// 폼 유효성 검사
-    if (!_formKey.currentState!.validate()) {
+    final valid = idRegex.hasMatch(id); // ✅ 즉시 검사
+    setState(() {
+      idValid = valid;
+      idChecked = false;
+      _idError = (!idTouched || valid) ? null : '아이디는 영소문자 포함 6~15자여야 합니다.';
+    });
+
+    if (!valid) {
+      setState(() {
+        _idError = '아이디는 영소문자 포함 6~15자여야 합니다.';
+      });
       return;
-    }*/
-    // 개인정보 동의 여부 확인
-    if (!agree) {
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final response = await DioClient.dio.get('/member/id_check', queryParameters: {'id': id});
+        final available = response.data == 1010;
+        setState(() {
+          idAvailable = available;
+          idChecked = true;
+          _idError = available ? null : '이미 사용 중인 아이디입니다.';
+        });
+      } catch (e) {
+        setState(() {
+          idAvailable = false;
+          idChecked = true;
+          _idError = '아이디 확인 요청 실패';
+        });
+      }
+    });
+  }
+
+  void _onPasswordChanged() {
+    final id = _idController.text;
+    final pw = _passwordController.text;
+    final regex = RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{8,16}$');
+
+    final isValid = regex.hasMatch(pw);
+    final isSimilar = isPasswordTooSimilarToId(id, pw);
+
+    setState(() {
+      passwordTouched = pw.isNotEmpty;
+
+      // 조건 미충족 또는 아이디 유사도 체크는 입력 시작 후부터만
+      if (!passwordTouched) {
+        _passwordError = null;
+        passwordValid = false;
+      } else if (!isValid) {
+        _passwordError = '조건에 맞지 않습니다.';
+        passwordValid = false;
+      } else if (isSimilar) {
+        _passwordError = '비밀번호에 아이디와 동일한 문자열이 포함되어 있습니다.';
+        passwordValid = false;
+      } else {
+        _passwordError = null;
+        passwordValid = true;
+      }
+    });
+  }
+
+  void _onPasswordConfirmChanged() {
+    setState(() {
+      passwordConfirmed = _passwordController.text == _confirmPasswordController.text;
+    });
+  }
+
+  void _onNameChanged() {
+    final name = _nameController.text.trim();
+    final nameRegex = RegExp(r'^[가-힣]{2,10}$');
+    setState(() {
+      _nameError = name.isEmpty || nameRegex.hasMatch(name)
+          ? null
+          : '이름은 한글 2~10자여야 합니다.';
+    });
+  }
+
+  void _onNicknameChanged() {
+    final nick = _nicknameController.text.trim();
+    final nickRegex = RegExp(r'^(?:[가-힣]{2,8}\d{0,4}|\d{1,4})$');
+    setState(() {
+      _nicknameError = nick.isEmpty || nickRegex.hasMatch(nick)
+          ? null
+          : '별칭은 한글 2~8자, 숫자 0~4자리만 가능합니다.';
+    });
+  }
+
+  void _onBirthChanged() {
+    if (_isFormatting) return;
+
+    final raw = _birthController.text;
+
+    if (raw.length == 10 && raw.contains('-')) return;
+
+    if (!_birthTouched && raw.isNotEmpty) {
+      setState(() {
+        _birthTouched = true;
+      });
+    }
+
+    // 입력 전이면 아무 검증도 하지 않음
+    if (!_birthTouched) return;
+
+    if (raw.length != 8) {
+      setState(() {
+        _birthError = '생년월일이 정확한지 확인해 주세요.';
+      });
+      return;
+    }
+
+    final year = int.tryParse(raw.substring(0, 4));
+    final month = int.tryParse(raw.substring(4, 6));
+    final day = int.tryParse(raw.substring(6, 8));
+
+    if (year == null || month == null || day == null) {
+      setState(() {
+        _birthError = '생년월일이 정확한지 확인해 주세요.';
+      });
+      return;
+    }
+
+    try {
+      final parsedDate = DateTime(year, month, day);
+
+      if (parsedDate.year != year ||
+          parsedDate.month != month ||
+          parsedDate.day != day) {
+        setState(() {
+          _birthError = '생년월일이 정확한지 확인해 주세요.';
+        });
+        return;
+      }
+
+      final now = DateTime.now();
+      final age = now.year -
+          parsedDate.year -
+          ((now.month < parsedDate.month ||
+              (now.month == parsedDate.month && now.day < parsedDate.day))
+              ? 1
+              : 0);
+
+      if (age < 0 || age > 120) {
+        setState(() {
+          _birthError = '생년월일이 정확한지 확인해 주세요.';
+        });
+        return;
+      }
+      final formatted =
+          '${raw.substring(0, 4)}-${raw.substring(4, 6)}-${raw.substring(6, 8)}';
+      _isFormatting = true;
+      _birthController.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+      _isFormatting = false;
+
+      // 에러 없앰 (중복 제거 위해 frame callback에 추가)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _birthError = null;
+          });
+        }
+      });
+    } catch (_) {
+      setState(() {
+        _birthError = '생년월일이 정확한지 확인해 주세요.';
+      });
+    }
+  }
+
+  void _sendVerificationCode() {
+    // 여기에 이메일로 인증번호 보내는 로직을 넣을 수 있어
+    // 예시로 단순 출력만:
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('개인정보 수집 및 이용에 동의해주세요.')),
+        const SnackBar(content: Text('이메일을 입력해주세요.')),
       );
       return;
     }
 
-    // 1. UUID 생성
-    var uuid = Uuid(); // Uuid 인스턴스 생성
-    String newUuid = uuid.v4(); // v4 방식의 UUID 생성 (가장 일반적)
-    // 또는 클래스 필드로 선언한 _uuidGenerator 사용:
-    // String newUuid = _uuidGenerator.v4();
+    // TODO: 실제 API 요청 보내기
+    print('✅ 인증번호 발송 요청: $email');
 
-    // 컨트롤러에서 실제 데이터 가져오기
-    Map<String, dynamic> memberInfo = {
-      'id': _idController.text,
-      'password': _passwordController.text,
-      'email': _emailController.text,
-      'name': _nameController.text,
-      'birthday': _birthController.text,
-      'nickname': _nicknameController.text,
-      'uuid': newUuid, // 2. 생성된 UUID를 member_info에 추가
-      // 'authorization': 'U', // 서버에서 기본값을 설정하거나, 클라이언트에서 명시적으로 보낼 수 있습니다.
-      // MemberDomain.java에는 authorization 필드가 있으므로 필요시 전송해야 합니다.
-      // 기본값 'U'를 보내려면 주석 해제하세요.
-    };
-
-    // 로딩 인디케이터 보여주기 (선택 사항)
-    // 예: showDialog(context: context, builder: (_) => Center(child: CircularProgressIndicator()));
-
-
-    Response response = await dio.post(
-        '/member/add', // 서버의 회원가입 API 엔드포인트
-        data: memberInfo
-    );
-    print('Signup Success: ${response.data}');
-    print('Generated UUID for user ${_idController.text}: $newUuid'); // 디버깅용 출력
-
-    // 로딩 인디케이터 숨기기 (선택 사항)
-    // if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-
-    // 성공 시 다음 페이지로 이동 또는 사용자에게 성공 알림
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainPage()),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$email 주소로 인증번호를 전송했습니다.')),
     );
   }
 
-  bool agree = false;
+  bool canSubmit() {
+    return idValid && idChecked && idAvailable &&
+        passwordTouched && passwordValid && passwordConfirmed &&
+        _nameError == null && _nicknameError == null && !nicknameInUse &&
+        _birthError == null &&
+        _emailController.text.trim().isNotEmpty && !emailInUse &&
+        agree;
+  }
 
-  // 가짜 중복 확인용
-  bool nicknameInUse = true;
-  bool emailInUse = true;
+  Future<void> _signup() async {
+    if (!agree) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('개인정보 수집에 동의해주세요.')),
+      );
+      return;
+    }
+    if (!idValid || !idChecked || !idAvailable ||
+        !passwordValid || !passwordConfirmed ||
+        _nameError != null || _nicknameError != null || nicknameInUse ||
+        _birthError != null || emailInUse ||
+        !agree) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('입력값을 다시 확인해주세요.')),
+      );
+      return;
+    }
+
+    try {
+      final response = await DioClient.dio.post(
+        '/member/add',
+        data: {
+          'id': _idController.text,
+          'password': _passwordController.text,
+          'name': _nameController.text,
+          'nickname': _nicknameController.text,
+          'birthday': _birthController.text,
+          'email': _emailController.text,
+        },
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('회원가입 성공')),
+        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('회원가입 실패: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -113,166 +321,196 @@ class _SignupPageState extends State<SignupPage> {
     _nicknameController.dispose();
     _birthController.dispose();
     _emailController.dispose();
+    _emailCodeController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
+
+  Widget _buildStatusText(bool condition, String successText, String failText) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        condition ? successText : failText,
+        style: TextStyle(color: condition ? Colors.green : Colors.red),
+      ),
+    );
+  }
+
+  String? _idError;
+  String? _passwordError;
+  String? _nameError;
+  String? _nicknameError;
+  String? _birthError;
 
   @override
   Widget build(BuildContext context) {
     return Theme(
         data: ThemeData.light().copyWith(brightness: Brightness.light),
-    child: Scaffold(
-      body: SafeArea(
+          child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                // 아이디
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('접속 이름 (아이디)', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
+
+                // ID
+                const Align(alignment: Alignment.centerLeft, child: Text('접속 이름')),
                 TextFormField(
                   controller: _idController,
-                  decoration: const InputDecoration(),
-                ),
-                const SizedBox(height: 16),
-
-                // 비밀번호
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('비밀번호', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    hintText: '특수문자/숫자/영대문자/영소문자\n최소 1개씩 사용하여 7~20자',
+                  decoration: InputDecoration(
+                    hintText: '영소문자 포함 6~15자',
+                    errorText: idTouched ? _idError : null, // 작성 전이면 null, 틀리면 메시지
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // 비밀번호 확인
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('비밀번호 확인', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(),
-                ),
-                if (_confirmPasswordController.text.isNotEmpty &&
-                    _confirmPasswordController.text != _passwordController.text)
-                  const Align(
+                if (idTouched && idValid && idChecked && idAvailable)
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      '비밀번호가 일치하지 않습니다.',
-                      style: TextStyle(color: Colors.red),
+                      '사용 가능한 아이디입니다.',
+                      style: const TextStyle(color: Colors.green),
                     ),
                   ),
                 const SizedBox(height: 16),
 
-                // 이름
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('이름', style: TextStyle(fontWeight: FontWeight.bold)),
+                // Password
+                const Align(alignment: Alignment.centerLeft, child: Text('비밀번호')),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: '영문자+숫자+특수문자 포함, 8~16자리',
+                    errorText: _passwordError,
+                  ),
                 ),
+                if (passwordTouched && passwordValid)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const Text('사용 가능한 비밀번호입니다.', style: TextStyle(color: Colors.green)),
+                  ),
+
+                // Confirm password
+                const Align(alignment: Alignment.centerLeft, child: Text('비밀번호 확인')),
+                TextFormField(controller: _confirmPasswordController, obscureText: true),
+                if (_confirmPasswordController.text.isNotEmpty)
+                  _buildStatusText(passwordConfirmed, '', '비밀번호가 일치하지 않습니다.'),
+                const SizedBox(height: 16),
+
+                // Name
+                const Align(alignment: Alignment.centerLeft, child: Text('이름')),
                 TextFormField(
                   controller: _nameController,
+                  decoration: InputDecoration(
+                    errorText: _nameError,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
-                // 별칭
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('별칭', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
+                // Nickname
+                const Align(alignment: Alignment.centerLeft, child: Text('별칭')),
                 TextFormField(
                   controller: _nicknameController,
+                  decoration: InputDecoration(
+                    errorText: _nicknameError,
+                  ),
                 ),
                 if (nicknameInUse)
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      '사용중인 별칭 입니다. / 부적합한 별칭입니다.',
-                      style: TextStyle(color: Colors.red),
-                    ),
+                    child: Text('사용중인 별칭입니다.', style: TextStyle(color: Colors.red)),
                   ),
                 const SizedBox(height: 16),
 
-                // 생년월일
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('생년월일', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
+                // Birthday
+                // 생년월일 입력
+                const Align(alignment: Alignment.centerLeft, child: Text('생년월일 (8자리)')),
                 TextFormField(
                   controller: _birthController,
-                  decoration: const InputDecoration(
-                    hintText: 'ex) 2000/02/22',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: '예: 19940428',
+                    errorText: _birthError,
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // 이메일
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('손글주소', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    hintText: 'ex) sodam@naver.com',
-                  ),
-                ),
+                // Email
+                const Align(alignment: Alignment.centerLeft, child: Text('손글주소')),
+                TextFormField(controller: _emailController),
                 if (emailInUse)
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      '가입 이력이 있는 이메일 입니다.',
-                      style: TextStyle(color: Colors.red),
-                    ),
+                    child: Text('이미 등록된 이메일입니다.', style: TextStyle(color: Colors.red)),
                   ),
                 const SizedBox(height: 16),
 
-                // 동의 체크박스
+                // 이메일 입력 아래에 추가
+                Row(
+                  children: [
+                    // 인증번호 입력 칸
+                    Expanded(
+                      child: TextFormField(
+                        controller: _emailCodeController,
+                        decoration: const InputDecoration(
+                          hintText: '인증번호 입력',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // 인증번호 발송 버튼
+                    ElevatedButton(
+                      onPressed: _sendVerificationCode, // 이 함수는 직접 정의해야 함
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD3E3BC), // 연한 연두색
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      child: const Text(
+                        '인증번호 발송',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // 개인정보 동의
                 Row(
                   children: [
                     Checkbox(
                       value: agree,
-                      onChanged: (val) {
-                        setState(() {
-                          agree = val ?? false;
-                        });
-                      },
+                      onChanged: (val) => setState(() => agree = val ?? false),
                     ),
-                    const Expanded(
-                      child: Text('소담톡 개인정보 수집 및 이용에 동의합니다.'),
-                    ),
+                    const Text('개인정보 수집 및 이용에 동의합니다.'),
                   ],
                 ),
                 const SizedBox(height: 20),
 
-                // 가입완료 버튼
+                // Submit button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    onPressed: canSubmit() ? _signup : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC9DAB2),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: canSubmit() ? const Color(0xFFD3E3BC) : Colors.grey[300], // 활성: 연두 / 비활성: 회색
+                      foregroundColor: Colors.black, // 텍스트 색
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    onPressed: () {
-                      print(_passwordController);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MainPage()),
-                      );
-                    },
-                    child: const Text(
-                      '가입완료',
-                      style: TextStyle(color: Colors.black),
-                    ),
+                    child: const Text('가입완료'),
                   ),
                 ),
               ],
@@ -280,7 +518,7 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
-    ),
+          ),
     );
   }
 }
