@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../main.dart'; // ← MyApp에 접근하려면 필요
+import '../main.dart'; // ← MyApp에 접근하려면 필요
 
 class ThemeSettingPage extends StatefulWidget {
   const ThemeSettingPage({super.key});

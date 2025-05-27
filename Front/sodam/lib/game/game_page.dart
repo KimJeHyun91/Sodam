@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/bottom_nav.dart';
+// import '../components/bottom_nav.dart';
 import '../game/ddakji_intro.dart';
 import '../game/sangaji_intro.dart'; // ✅ 추가
 import '../game/namdo_intro.dart';  // ✅ 추가
@@ -29,7 +29,7 @@ class GamePage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
+      // bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 

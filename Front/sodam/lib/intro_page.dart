@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/auth_choice_page.dart';
+import 'login/auth_choice_page.dart';
 import 'main_page.dart'; // 👉 네가 이동할 메인페이지
 
 class IntroPage extends StatefulWidget {
