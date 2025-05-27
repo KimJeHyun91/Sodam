@@ -7,33 +7,19 @@
     <list default="true" id="11ea4fb2-5d32-4e24-9114-6ec67a3dca08" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/.log" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.projects/.org.eclipse.egit.core.cmp/.location" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.projects/.org.eclipse.egit.core.cmp/.location" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.ui.ide.prefs" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.ui.ide.prefs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.ui.workbench/workingsets.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.ui.workbench/workingsets.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Back/.metadata/version.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/version.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/lib/chat/chat_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/chat/chat_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/components/bottom_nav.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/components/bottom_nav.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/game/ddakji_intro.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/game/ddakji_intro.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/chat/room_create_sheet.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/chat/room_create_sheet.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/lib/game/game_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/game/game_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/intro_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/intro_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/auth_choice_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/auth_choice_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/find_id_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/find_id_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/guest_warning_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/guest_warning_page.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/login_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/login_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/my_page.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/signup_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/signup_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/main_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/main_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/auth_choice_page.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/chat_page.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/collection.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/game_page.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/login_page.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/collection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/collection.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/edit_profile_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/edit_profile_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/help_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/help_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/my_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/my_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/notification_setting_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/notification_setting_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/settings_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/settings_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/store.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/store.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/theme_setting_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/theme_setting_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/signup_page.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/store.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/reset_password_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/reset_password_page.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

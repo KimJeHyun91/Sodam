@@ -7,7 +7,9 @@ class GuestWarningPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -94,6 +96,7 @@ class GuestWarningPage extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

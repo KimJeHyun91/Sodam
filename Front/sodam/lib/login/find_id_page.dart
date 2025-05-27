@@ -6,7 +6,9 @@ class FindIdPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       appBar: AppBar(title: const Text('접속이름 찾기')),
       body: Padding(
         padding: const EdgeInsets.all(30),
@@ -69,6 +71,7 @@ class FindIdPage extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
