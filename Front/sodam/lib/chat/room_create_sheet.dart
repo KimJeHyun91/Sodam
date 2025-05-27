@@ -85,7 +85,7 @@ class _RoomCreateSheetState extends State<RoomCreateSheet> {
                   Navigator.pop(context, newRoom);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC9DAB2),
+                  backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
                 ),
                 child: const Text('만들기'),
               ),

@@ -12,8 +12,8 @@ class GamePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('놀이'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
       ),
       body: Padding(
