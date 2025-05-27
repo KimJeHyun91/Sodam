@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +19,6 @@ import com.sodam.domain.PointChangeReasonDomain;
 import com.sodam.domain.PointDomain;
 import com.sodam.domain.PointHistoryDomain;
 import com.sodam.dto.PointHistoryDto;
-import com.sodam.dto.PointHistorySecondDto;
 import com.sodam.id.PointHistoryId;
 import com.sodam.service.PointChangeReasonService;
 import com.sodam.service.PointHistoryService;
@@ -33,81 +34,48 @@ public class PointController {
 	@Autowired
 	PointChangeReasonService point_change_reason_service;
 	
-	@GetMapping("/get_info")
-	public PointDomain get_info(@RequestParam("id") String id) {
+	@GetMapping("/get_info_object")
+	public PointDomain get_info_object(@RequestParam("point_no") Long point_no) {
+		if(point_no==null||point_no.equals("")) {
+			return null;
+		}
+
+		Optional<PointDomain> result_point=point_service.get_info_object(point_no);
+		if(result_point.isEmpty()) {
+			return null;
+		}
+		return result_point.get();
+	}
+	
+	@GetMapping("/get_info_id_object")
+	public PointDomain get_info_id_object(@RequestParam("id") String id) {
 		if(id==null||id.equals("")) {
 			return null;
 		}
-		PointDomain result_point=point_service.get_info(id);
-		return result_point;
+		
+		Optional<PointDomain> result_optional=point_service.get_info_id_object(id);
+		if(result_optional.isEmpty()) {
+			return null;
+		}
+		return result_optional.get();
 	}
 	
 	@PutMapping("/update")
-	public int update(@RequestBody PointHistoryDto point_history_dto) {
+	public int update(@RequestBody PointDomain point_domain) {
 		// 널값, 빈값 체크
 		if(
-				point_history_dto.getId()==null||
-				point_history_dto.getId().equals("")||
-				point_history_dto.getChange()==null||
-				point_history_dto.getChange().equals("")||
-				point_history_dto.getPoint_plus_minus()==null||
-				point_history_dto.getPoint_plus_minus().equals("")||
-				point_history_dto.getPoint_change_reason_code()==null||
-				point_history_dto.getPoint_change_reason_code().equals("")
+				point_domain.getId()==null||
+				point_domain.getId().equals("")||
+				point_domain.getCurrent_point()==null||
+				point_domain.getCurrent_point().equals("")
 		) {
 			return 1900;
 		}
-		
-		// point_plus_minus 값 체크
-		if(!(point_history_dto.getPoint_plus_minus().equals('P')||point_history_dto.getPoint_plus_minus().equals('M'))) {
-			return 1103;
-		}
-		
-		// point_change_reason_code 값 체크
-		List<PointChangeReasonDomain> result_list=point_change_reason_service.get_change_reason_list();
-		if(result_list==null) {
-			return 1101;
-		}
-		boolean temp_flag=false;
-		for(PointChangeReasonDomain a : result_list) {
-			if(a.getPoint_change_reason_code().equals(point_history_dto.getPoint_change_reason_code())) {
-				temp_flag=true;
-			}
-		}
-		if(!temp_flag) {
-			return 1104;
-		}
-		
-		// 현재 포인트 수정
-		PointDomain point_domain=point_service.get_info(point_history_dto.getId());
-		if(point_history_dto.getPoint_plus_minus().equals('P')) {
-			point_domain.setCurrent_point(point_domain.getCurrent_point()+point_history_dto.getChange());
-		}else if(point_history_dto.getPoint_plus_minus().equals('M')) {
-			if(point_domain.getCurrent_point()<point_history_dto.getChange()) {
-				return 1102;
-			}
-			point_domain.setCurrent_point(point_domain.getCurrent_point()-point_history_dto.getChange());
-		}
 		PointDomain result_point=point_service.update(point_domain);
-		if(result_point==null) {
-			return 1101;
+		if(result_point!=null) {
+			return 1100;
 		}
-		
-		// 포인트 수정 내역 저장
-		PointHistoryId point_history_id=new PointHistoryId();
-		point_history_id.setPoint_no(point_domain.getPoint_no());
-		
-		PointHistoryDomain point_history_domain=new PointHistoryDomain();
-		point_history_domain.setPoint_history_id(point_history_id);
-		point_history_domain.setChange(point_history_dto.getChange());
-		point_history_domain.setPoint_plus_minus(point_history_dto.getPoint_plus_minus());
-		point_history_domain.setPoint_change_reason_code(point_history_dto.getPoint_change_reason_code());
-		
-		PointHistoryDomain result_point_history=point_history_service.update(point_history_domain);
-		if(result_point_history==null) {
-			return 1101;
-		}
-		return 1100;
+		return 1101;
 	}
 	
 	@GetMapping("/get_change_reason_list")
@@ -117,7 +85,7 @@ public class PointController {
 	
 	@GetMapping("/get_change_reason_object")
 	public PointChangeReasonDomain get_change_reason_object(@RequestParam("point_change_reason_code") String point_change_reason_code) {
-		if(point_change_reason_code==null) {
+		if(point_change_reason_code==null||point_change_reason_code.equals("")) {
 			return null;
 		}
 		Optional<PointChangeReasonDomain> result_point_change_reason=point_change_reason_service.get_change_reason_object(point_change_reason_code);
@@ -166,10 +134,10 @@ public class PointController {
 			point_change_reason_domain.setPoint_change_reason_detail(temp_point_change_reason.getPoint_change_reason_detail());
 		}
 		PointChangeReasonDomain result_point_change_reason=point_change_reason_service.update_change_reason(point_change_reason_domain);
-		if(result_point_change_reason==null) {
-			return 1121;
+		if(result_point_change_reason!=null) {
+			return 1120;
 		}
-		return 1120;
+		return 1121;
 	}
 	
 	@DeleteMapping("/delete_change_reason")
@@ -197,10 +165,10 @@ public class PointController {
 		}
 		
 		PointDomain result_point=point_service.create(point_domain);
-		if(result_point==null) {
-			return 1141;
+		if(result_point!=null) {
+			return 1140;
 		}
-		return 1140;
+		return 1141;
 	}
 	
 	@DeleteMapping("/delete")
@@ -211,11 +179,11 @@ public class PointController {
 		) {
 			return 1900;
 		}
-		PointDomain result_point=point_service.get_info(id);
-		if(result_point==null) {
+		Optional<PointDomain> result_point=point_service.get_info_id_object(id);
+		if(result_point.isEmpty()) {
 			return 1151;
 		}
-		Optional<PointDomain> result_optional=point_service.delete(result_point.getPoint_no());
+		Optional<PointDomain> result_optional=point_service.delete(result_point.get().getPoint_no());
 		if(result_optional.isPresent()) {
 			return 1151;
 		}
@@ -223,18 +191,23 @@ public class PointController {
 	}
 	
 	@GetMapping("/get_history_list")
-	public List<PointHistoryDomain> get_history_list(@RequestParam("id") String id){
+	public List<PointHistoryDomain> get_history_list(){
+		return point_history_service.get_history_list();
+	}
+	
+	@GetMapping("/get_history_point_no_list")
+	public List<PointHistoryDomain> get_history_point_no_list(@RequestParam("id") String id){
 		if(
 				id==null||
 				id.equals("")
 		) {
 			return null;
 		}
-		PointDomain result_point=point_service.get_info(id);
-		if(result_point==null) {
+		Optional<PointDomain> result_point=point_service.get_info_id_object(id);
+		if(result_point.isEmpty()) {
 			return null;
 		}
-		return point_history_service.get_history_list(result_point.getPoint_no());
+		return point_history_service.get_history_point_no_list(result_point.get().getPoint_no());
 	}
 	
 	@GetMapping("/get_history_object")
@@ -257,23 +230,111 @@ public class PointController {
 		return null;
 	}
 	
-	@PutMapping("/update_history")
-	public int update_history(@RequestBody PointHistorySecondDto point_history_second_dto) {
+	@PostMapping("/create_history")
+	public int create_history(@RequestBody PointHistoryDto point_history_dto) {
 		if(
-				point_history_second_dto.getPoint_history_no()==null||
-				point_history_second_dto.getPoint_no()==null
+				point_history_dto.getPoint_no()==null||
+				point_history_dto.getPoint_no().equals("")||
+				point_history_dto.getChange_amount()==null||
+				point_history_dto.getChange_amount().equals("")||
+				point_history_dto.getPoint_plus_minus()==null||
+				point_history_dto.getPoint_plus_minus().equals("")||
+				point_history_dto.getPoint_change_reason_code()==null||
+				point_history_dto.getPoint_change_reason_code().equals("")
+		) {
+			return 1900;
+		}
+		if(!(point_history_dto.getPoint_plus_minus().equals('P')||point_history_dto.getPoint_plus_minus().equals('M'))) {
+			return 1162;
+		}
+		List<PointChangeReasonDomain> result_list=point_change_reason_service.get_change_reason_list();
+		if(result_list.size()>0) {
+			boolean temp_flag=false;
+			for(PointChangeReasonDomain a : result_list) {
+				if(a.getPoint_change_reason_code().equals(point_history_dto.getPoint_change_reason_code())) {
+					temp_flag=true;
+				}
+			}
+			if(!temp_flag) {
+				return 1163;
+			}
+		}
+		
+		int point_flag=0;
+		int point_history_flag=0;
+		
+		// 엽전 수정
+		Optional<PointDomain> result_point_optional=point_service.get_info_object(point_history_dto.getPoint_no());
+		if(result_point_optional.isPresent()) {
+			PointDomain point_domain=new PointDomain();
+			point_domain.setPoint_no(point_history_dto.getPoint_no());
+			if(point_history_dto.getPoint_plus_minus().equals('P')) {
+				point_domain.setCurrent_point(point_domain.getCurrent_point()+point_history_dto.getChange_amount());
+			}else if(point_history_dto.getPoint_plus_minus().equals('M')) {
+				if(point_domain.getCurrent_point()<point_history_dto.getChange_amount()) {
+					return 1102;
+				}
+				point_domain.setCurrent_point(point_domain.getCurrent_point()-point_history_dto.getChange_amount());
+			}
+			PointDomain result_point=point_service.update(point_domain);		
+			if(result_point!=null) {
+				point_flag=1;
+			}
+		}
+		
+		// 엽전 내역 생성
+		PointHistoryDomain point_history_domain=new PointHistoryDomain();
+		
+		PointHistoryId point_history_id=new PointHistoryId();
+		point_history_id.setPoint_no(point_history_dto.getPoint_no());
+		point_history_domain.setPoint_history_id(point_history_id);
+		point_history_domain.setChange_amount(point_history_dto.getChange_amount());
+		point_history_domain.setPoint_plus_minus(point_history_dto.getPoint_plus_minus());
+		point_history_domain.setPoint_change_reason_code(point_history_dto.getPoint_change_reason_code());
+			
+		try {
+            PointHistoryDomain result_point_history = point_history_service.create_history(point_history_domain);
+            if (result_point_history != null && result_point_history.getPoint_history_id() != null && result_point_history.getPoint_history_id().getPoint_history_no() != null) {
+            	point_history_flag=1;
+            } else {
+            	point_history_flag=0;
+            }
+        } catch (DataIntegrityViolationException e) {
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return 1157;
+        } catch (IllegalArgumentException e) {
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return 1158;
+        }	
+			
+		String result_flag=""+point_flag+point_history_flag;
+		
+		if(!result_flag.equals("11")) {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			return Integer.parseInt(result_flag);
+		}
+		
+		return Integer.parseInt(result_flag); 
+
+	}
+	
+	@PutMapping("/update_history")
+	public int update_history(@RequestBody PointHistoryDto point_history_dto) {
+		if(
+				point_history_dto.getPoint_history_no()==null||
+				point_history_dto.getPoint_no()==null
 		) {
 			return 1900;
 		}
 		
 		// point_plus_minus 값 체크
-		if(!(point_history_second_dto.getPoint_plus_minus().equals('P')||point_history_second_dto.getPoint_plus_minus().equals('M'))) {
-			return 1103;
+		if(!(point_history_dto.getPoint_plus_minus().equals('P')||point_history_dto.getPoint_plus_minus().equals('M'))) {
+			return 1162;
 		}
 		
 		PointHistoryId point_history_id=new PointHistoryId();
-		point_history_id.setPoint_no(point_history_second_dto.getPoint_no());
-		point_history_id.setPoint_history_no(point_history_second_dto.getPoint_history_no());
+		point_history_id.setPoint_no(point_history_dto.getPoint_no());
+		point_history_id.setPoint_history_no(point_history_dto.getPoint_history_no());
 		Optional<PointHistoryDomain> result_optional=point_history_service.get_history_object(point_history_id);
 		if(result_optional.isEmpty()) {
 			return 1161;
@@ -281,28 +342,28 @@ public class PointController {
 		PointHistoryDomain point_history_domain=result_optional.get();
 		
 		
-		if(point_history_second_dto.getChange()!=null) {
-			point_history_domain.setChange(point_history_second_dto.getChange());
+		if(point_history_dto.getChange_amount()!=null) {
+			point_history_domain.setChange_amount(point_history_dto.getChange_amount());
 		}
-		if(point_history_second_dto.getPoint_plus_minus()!=null) {
-			point_history_domain.setPoint_plus_minus(point_history_second_dto.getPoint_plus_minus());
+		if(point_history_dto.getPoint_plus_minus()!=null) {
+			point_history_domain.setPoint_plus_minus(point_history_dto.getPoint_plus_minus());
 		}
-		if(point_history_second_dto.getPoint_change_reason_code()!=null) {
+		if(point_history_dto.getPoint_change_reason_code()!=null) {
 			// point_change_reason_code 값 체크
 			List<PointChangeReasonDomain> result_list=point_change_reason_service.get_change_reason_list();
-			if(result_list==null) {
+			if(result_list.isEmpty()) {
 				return 1161;
 			}
 			boolean temp_flag=false;
 			for(PointChangeReasonDomain a : result_list) {
-				if(a.getPoint_change_reason_code().equals(point_history_second_dto.getPoint_change_reason_code())) {
+				if(a.getPoint_change_reason_code().equals(point_history_dto.getPoint_change_reason_code())) {
 					temp_flag=true;
 				}
 			}
 			if(!temp_flag) {
-				return 1104;
+				return 1163;
 			}
-			point_history_domain.setPoint_change_reason_code(point_history_second_dto.getPoint_change_reason_code());
+			point_history_domain.setPoint_change_reason_code(point_history_dto.getPoint_change_reason_code());
 		}
 		
 		PointHistoryDomain result_point_history=point_history_service.update(point_history_domain);
@@ -312,22 +373,48 @@ public class PointController {
 		return 1160;
 	}
 	
-	@DeleteMapping("/delete_history_all")
-	public int delete_history_all(@RequestParam("id") String id) {
+	@DeleteMapping("/delete_history_list")
+	public int delete_history_list() {
+		List<PointHistoryDomain> result_list=point_history_service.delete_history_list();
+		if(result_list.isEmpty()) {
+			return 1170;
+		}
+		return 1171;
+	}
+	
+	@DeleteMapping("/delete_history_point_no_list")
+	public int delete_history_list(@RequestParam("id") String id) {
 		if(
 				id==null||
 				id.equals("")
 		) {
 			return 1900;
 		}
-		PointDomain point_domain=point_service.get_info(id);
-		List<PointHistoryDomain> result_list=point_history_service.delete_history_all(point_domain.getPoint_no());
-		if(result_list==null) {
-			return 1170;
+		Optional<PointDomain> point_domain=point_service.get_info_id_object(id);
+		List<PointHistoryDomain> result_list=point_history_service.delete_history_point_no_list(point_domain.get().getPoint_no());
+		if(result_list.isEmpty()) {
+			return 1190;
 		}
-		return 1171;
+		return 1191;
 	}
 	
-	
+	@DeleteMapping("/delete_history_object")
+	public int delete_history_object(@RequestParam("point_history_no") Long point_history_no, @RequestParam("point_no") Long point_no) {
+		if(
+				point_history_no==null||
+				point_no==null
+		) {
+			return 1900;
+		}
+		PointHistoryId point_history_id=new PointHistoryId();
+		point_history_id.setPoint_no(point_no);
+		point_history_id.setPoint_history_no(point_history_no);
+		
+		Optional<PointHistoryDomain> result_optional=point_history_service.delete_history_object(point_history_id);
+		if(result_optional.isPresent()) {
+			return 1181;
+		}
+		return 1180;
+	}
 	
 }

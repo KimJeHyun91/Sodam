@@ -5,12 +5,13 @@ import lombok.Data;
 
 @Data
 public class PointHistoryDto {
+	public Long point_history_no;
 	@NotNull
-	private String Id;
+	public Long point_no;
 	@NotNull
-	private Long change;
+	public Long change_amount;
 	@NotNull
-	private Character point_plus_minus;
+	public Character point_plus_minus;
 	@NotNull
-	private String point_change_reason_code;
+	public String point_change_reason_code;
 }
