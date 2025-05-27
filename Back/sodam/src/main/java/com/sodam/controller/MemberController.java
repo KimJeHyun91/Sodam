@@ -68,7 +68,7 @@ public class MemberController {
 	}
 	
 	@GetMapping("/login")
-	public int login(@RequestParam("id") String id, @RequestParam("password") String passwrod) {
+	public int login(@RequestParam("id") String id, @RequestParam("password") String password) {
 		if(id==null||id.equals("")) {
 			return 1900;
 		}
@@ -77,10 +77,13 @@ public class MemberController {
 			return 1010;
 		}
 		MemberDomain result_domain=result_optional.get();
-		boolean result_flag=password_encoder.matches(passwrod, result_domain.getPassword());
-		if(result_flag) {
+		if(result_domain.getPassword().equals(password)) {
 			return 1020;
 		}
+//		boolean result_flag=password_encoder.matches(password, result_domain.getPassword());
+//		if(result_flag) {
+//			return 1020;
+//		}
 		return 1021;
 	}
 	
@@ -135,6 +138,18 @@ public class MemberController {
 			return 1050;
 		}
 		return 1051;
+	}
+	
+	@GetMapping("/get_member_object")
+	public MemberDomain get_member_object(@RequestParam("id") String id) {
+		if(id==null||id.equals("")) {
+			return null;
+		}
+		Optional<MemberDomain> result_optional=member_service.get_member_object(id);
+		if(result_optional.isPresent()) {
+			return result_optional.get();
+		}
+		return null;
 	}
 	
 }

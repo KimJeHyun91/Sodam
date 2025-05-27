@@ -4,7 +4,37 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="11ea4fb2-5d32-4e24-9114-6ec67a3dca08" name="Changes" comment="" />
+    <list default="true" id="11ea4fb2-5d32-4e24-9114-6ec67a3dca08" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/.log" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.metadata/version.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.metadata/version.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/chat/chat_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/chat/chat_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/components/bottom_nav.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/components/bottom_nav.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/game/ddakji_intro.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/game/ddakji_intro.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/game/game_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/game/game_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/intro_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/intro_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/auth_choice_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/auth_choice_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/login_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/login_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/my_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/login/signup_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/login/signup_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/main_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/main_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/auth_choice_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/chat_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/collection.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/game_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/login_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/collection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/collection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/edit_profile_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/edit_profile_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/help_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/help_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/my_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/my_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/notification_setting_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/notification_setting_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/settings_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/settings_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/store.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/store.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views/theme_setting_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/Front/sodam/lib/myPage/theme_setting_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/signup_page.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/sodam/lib/pages/store.dart" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -16,30 +46,51 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 3
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="2xQnFMCoB9kgZIHZvXcGvrJg4sl" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "tae",
-    "kotlin-language-version-configured": "true",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Flutter.main.dart.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;김기찬&quot;,
+    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Front/sodam/lib/myPage" />
+      <recent name="$PROJECT_DIR$/Front/sodam/lib/login" />
+      <recent name="$PROJECT_DIR$/Front/sodam/lib/pages/my_page_views" />
+      <recent name="$PROJECT_DIR$/Front/sodam/lib/mypage" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter" temporary="true" nameIsGenerated="true">
+      <option name="filePath" value="$PROJECT_DIR$/Front/sodam/lib/main.dart" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Flutter.main.dart" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">

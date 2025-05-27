@@ -31,7 +31,11 @@ public class MemberService {
 	}
 
 	public Optional<MemberDomain> delete(String id) {
-		member_repository.deleteById(id);;
+		member_repository.deleteById(id);
+		return member_repository.findById(id);
+	}
+
+	public Optional<MemberDomain> get_member_object(String id) {
 		return member_repository.findById(id);
 	}
 

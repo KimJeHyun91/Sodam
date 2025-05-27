@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sodam/style.dart';
 import '../components/bottom_nav.dart';
 import '../chat/chat_page.dart';
-import '../mypage/my_page.dart';
+import '../myPage/my_page.dart';
 import 'select_user.dart'; // ✅ 상대 선택 페이지 import
 
 class DdakjiIntroPage extends StatelessWidget {

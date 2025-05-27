@@ -262,11 +262,11 @@ class _SignupPageState extends State<SignupPage> {
 
   bool canSubmit() {
     return idValid && idChecked && idAvailable &&
-           passwordTouched && passwordValid && passwordConfirmed &&
-           _nameError == null && _nicknameError == null && !nicknameInUse &&
-           _birthError == null &&
-           _emailController.text.trim().isNotEmpty && !emailInUse &&
-           agree;
+        passwordTouched && passwordValid && passwordConfirmed &&
+        _nameError == null && _nicknameError == null && !nicknameInUse &&
+        _birthError == null &&
+        _emailController.text.trim().isNotEmpty && !emailInUse &&
+        agree;
   }
 
   Future<void> _signup() async {
@@ -344,8 +344,11 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold( backgroundColor: Colors.white,
-      body: SafeArea(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+          child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -423,19 +426,19 @@ class _SignupPageState extends State<SignupPage> {
                 // Birthday
                 // 생년월일 입력
                 const Align(alignment: Alignment.centerLeft, child: Text('생년월일 (8자리)')),
-                  TextFormField(
-                    controller: _birthController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(8),
-                    ],
-                    decoration: InputDecoration(
-                      hintText: '예: 19940428',
-                      errorText: _birthError,
-                    ),
+                TextFormField(
+                  controller: _birthController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: '예: 19940428',
+                    errorText: _birthError,
                   ),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(height: 16),
 
                 // Email
                 const Align(alignment: Alignment.centerLeft, child: Text('손글주소')),
@@ -515,6 +518,7 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
+          ),
     );
   }
 }
