@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sodam/main_page.dart';
 import 'find_id_page.dart';
 import 'reset_password_page.dart';
@@ -40,6 +41,9 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.data == 1020) {
+        // 로그인 아이디 저장 -> 추가
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('loggedInId', id);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),
