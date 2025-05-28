@@ -67,7 +67,7 @@ public class MemberController {
 				) {
 			return 1900;
 		}
-		
+		member_domain.setAuthorization('U');
 		int member_flag=0;
 		int point_flag=0;
 		
@@ -84,6 +84,7 @@ public class MemberController {
 			// 포인트 테이블 생성
 			PointDomain point_domain=new PointDomain();
 			point_domain.setId(result_member.getId());
+			point_domain.setCurrent_point(0L);
 			PointDomain result_point=point_service.create(point_domain);
 			if(result_point!=null) {
 				point_flag=1;
@@ -135,6 +136,7 @@ public class MemberController {
 				) {
 			return 1900;
 		}
+
 		Optional<MemberDomain> result_optional=member_service.id_check(member_domain.getId());
 		if(result_optional.isEmpty()) {
 			return 1010;
