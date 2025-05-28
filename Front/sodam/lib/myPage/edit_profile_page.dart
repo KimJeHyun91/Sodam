@@ -208,11 +208,125 @@
 //       );
 //     }
 //   }
+// import 'package:flutter/material.dart';
+// import 'package:dio/dio.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'dart:io';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:flutter/services.dart';
+//
+// class EditProfilePage extends StatefulWidget {
+//   const EditProfilePage({super.key});
+//
+//   @override
+//   State<EditProfilePage> createState() => _EditProfilePageState();
+// }
+//
+// class _EditProfilePageState extends State<EditProfilePage> {
+//   final Dio dio = Dio();
+//   final TextEditingController nicknameController = TextEditingController();
+//   final TextEditingController passwordController = TextEditingController();
+//   final TextEditingController confirmPasswordController = TextEditingController();
+//   final TextEditingController emailController = TextEditingController();
+//   final TextEditingController nameController = TextEditingController();
+//   final TextEditingController birthdayController = TextEditingController();
+//
+//   bool isLoading = true;
+//   bool isFormValid = false;
+//
+//   String? originalNickname;
+//   String? originalPassword;
+//   String? originalEmail;
+//   String? originalName;
+//   String? originalBirthday;
+//
+//   File? _selectedImage;
+//   final ImagePicker _picker = ImagePicker();
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     loadUserInfo();
+//
+//     nicknameController.addListener(_validateForm);
+//     passwordController.addListener(_validateForm);
+//     confirmPasswordController.addListener(_validateForm);
+//     emailController.addListener(_validateForm);
+//     nameController.addListener(_validateForm);
+//     birthdayController.addListener(_validateForm);
+//   }
+//
+//   Future<void> _pickImage() async {
+//     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+//     if (image != null) {
+//       setState(() {
+//         _selectedImage = File(image.path);
+//       });
+//     }
+//   }
+//
+//   void _showPhotoOptions() {
+//     showModalBottomSheet(
+//       context: context,
+//       shape: const RoundedRectangleBorder(
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+//       ),
+//       builder: (_) {
+//         return SafeArea(
+//           child: Wrap(
+//             children: [
+//               ListTile(
+//                 leading: const Icon(Icons.photo),
+//                 title: const Text('사진 앨범에서 선택'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _pickImage();
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.close),
+//                 title: const Text('취소'),
+//                 onTap: () => Navigator.pop(context),
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
+//   }
+//
+//   void _validateForm() {
+//     final nickname = nicknameController.text.trim();
+//     final password = passwordController.text.trim();
+//     final confirmPassword = confirmPasswordController.text.trim();
+//     final email = emailController.text.trim();
+//     final name = nameController.text.trim();
+//     final birthday = birthdayController.text.trim();
+//
+//     final nicknameChanged = originalNickname != null && nickname != originalNickname;
+//     final emailChanged = originalEmail != null && email != originalEmail;
+//     final nameChanged = originalName != null && name != originalName;
+//     final birthdayChanged = originalBirthday != null && birthday != originalBirthday;
+//
+//     final passwordFilled = password.isNotEmpty && confirmPassword.isNotEmpty;
+//     final passwordMatch = password == confirmPassword;
+//     final passwordChanged = password != originalPassword;
+//     final passwordValid = passwordFilled && passwordMatch && passwordChanged;
+//
+//     final valid = nicknameChanged || emailChanged || nameChanged || birthdayChanged || passwordValid;
+//
+//     if (valid != isFormValid) {
+//       setState(() {
+//         isFormValid = valid;
+//       });
+//     }
+//   }
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -232,6 +346,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   bool isLoading = true;
   bool isFormValid = false;
+  String? nicknameError;
+  String? passwordError;
+  String? birthdayError;
+  String? nameError;
+  String? emailError;
 
   String? originalNickname;
   String? originalPassword;
@@ -253,6 +372,39 @@ class _EditProfilePageState extends State<EditProfilePage> {
     emailController.addListener(_validateForm);
     nameController.addListener(_validateForm);
     birthdayController.addListener(_validateForm);
+  }
+
+  void _validateForm() {
+    final nickname = nicknameController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+    final email = emailController.text.trim();
+    final name = nameController.text.trim();
+    final birthday = birthdayController.text.trim();
+
+    final nicknameReg = RegExp(r'^(?:[가-힣]{2,8}\d{0,4}|\d{1,4})\$');
+    final passwordReg = RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{8,16}\$');
+    final nameReg = RegExp(r'^[가-힣]{2,10}\$');
+
+    nicknameError = nicknameReg.hasMatch(nickname) ? null : '형식 오류: 한글 2~8자 + 숫자 0~4자';
+    passwordError = passwordReg.hasMatch(password) ? null : '비밀번호 조건 불충족';
+    birthdayError = birthday.length == 10 && birthday.contains('-') ? null : 'YYYY-MM-DD 형식 필요';
+    nameError = nameReg.hasMatch(name) ? null : '이름은 한글 2~10자';
+    emailError = email.contains('@') && email.contains('.') ? null : '이메일 형식 오류';
+
+    final changed = (originalNickname != null && nickname != originalNickname) ||
+        (originalEmail != null && email != originalEmail) ||
+        (originalName != null && name != originalName) ||
+        (originalBirthday != null && birthday != originalBirthday) ||
+        (password.isNotEmpty && password == confirmPassword && password != originalPassword);
+
+    final valid = [nicknameError, passwordError, birthdayError, nameError, emailError].every((e) => e == null) && changed;
+
+    if (valid != isFormValid) {
+      setState(() {
+        isFormValid = valid;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -292,33 +444,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       },
     );
-  }
-
-  void _validateForm() {
-    final nickname = nicknameController.text.trim();
-    final password = passwordController.text.trim();
-    final confirmPassword = confirmPasswordController.text.trim();
-    final email = emailController.text.trim();
-    final name = nameController.text.trim();
-    final birthday = birthdayController.text.trim();
-
-    final nicknameChanged = originalNickname != null && nickname != originalNickname;
-    final emailChanged = originalEmail != null && email != originalEmail;
-    final nameChanged = originalName != null && name != originalName;
-    final birthdayChanged = originalBirthday != null && birthday != originalBirthday;
-
-    final passwordFilled = password.isNotEmpty && confirmPassword.isNotEmpty;
-    final passwordMatch = password == confirmPassword;
-    final passwordChanged = password != originalPassword;
-    final passwordValid = passwordFilled && passwordMatch && passwordChanged;
-
-    final valid = nicknameChanged || emailChanged || nameChanged || birthdayChanged || passwordValid;
-
-    if (valid != isFormValid) {
-      setState(() {
-        isFormValid = valid;
-      });
-    }
   }
 
   Future<Options> _authOptions() async {
@@ -588,16 +713,41 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _textField({required TextEditingController controller, bool obscure = false}) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscure,
-      decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+  // Widget _textField({required TextEditingController controller, bool obscure = false}) {
+  //   return TextFormField(
+  //     controller: controller,
+  //     obscureText: obscure,
+  //     decoration: InputDecoration(
+  //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //       border: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(10),
+  //       ),
+  //     ),
+  //   );
+  // }
+  Widget _textField({required TextEditingController controller, bool obscure = false, String? errorText}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: controller,
+          obscureText: obscure,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         ),
-      ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              errorText,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 }
