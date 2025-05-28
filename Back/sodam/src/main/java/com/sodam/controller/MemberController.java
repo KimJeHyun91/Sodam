@@ -143,43 +143,85 @@ public class MemberController {
 		return 1021;
 	}
 	
+//	@PutMapping("/update") 이전꺼. 혹시몰라서 주석처리. 
+//	public int update(@RequestBody MemberDomain member_domain) {
+//		if(
+//				member_domain.getId()==null||
+//				member_domain.getId().equals("")
+//				) {
+//			return 1900;
+//		}
+//		Optional<MemberDomain> result_optional=member_service.id_check(member_domain.getId());
+//		if(result_optional.isEmpty()) {
+//			return 1010;
+//		}
+//		MemberDomain member=result_optional.get();
+//		if(member_domain.getPassword()!=null||!member_domain.getPassword().equals("")) {
+//			member.setPassword(password_encoder.encode(member_domain.getPassword()));
+//		}
+//		if(member_domain.getEmail()!=null||!member_domain.getEmail().equals("")) {
+//			member.setEmail(member_domain.getEmail());
+//		}
+//		if(member_domain.getName()!=null||!member_domain.getName().equals("")) {
+//			member.setName(member_domain.getName());
+//		}
+//		if(member_domain.getBirthday()!=null||!member_domain.getBirthday().equals("")) {
+//			member.setBirthday(member_domain.getBirthday());
+//		}
+//		if(member_domain.getNickname()!=null||!member_domain.getNickname().equals("")) {
+//			Optional<MemberDomain> temp_optional=member_service.nickname_check(member_domain.getNickname());
+//			if(temp_optional.isPresent()) {
+//				return 1041;
+//			}
+//			member.setNickname(member_domain.getNickname());
+//		}
+//		MemberDomain result_member=member_service.update(member_domain);
+//		if(result_member!=null) {
+//			return 1030;
+//		}
+//		return 1031;
+//	}
 	@PutMapping("/update")
 	public int update(@RequestBody MemberDomain member_domain) {
-		if(
-				member_domain.getId()==null||
-				member_domain.getId().equals("")
-				) {
-			return 1900;
-		}
-		Optional<MemberDomain> result_optional=member_service.id_check(member_domain.getId());
-		if(result_optional.isEmpty()) {
-			return 1010;
-		}
-		MemberDomain member=result_optional.get();
-		if(member_domain.getPassword()!=null||!member_domain.getPassword().equals("")) {
-			member.setPassword(password_encoder.encode(member_domain.getPassword()));
-		}
-		if(member_domain.getEmail()!=null||!member_domain.getEmail().equals("")) {
-			member.setEmail(member_domain.getEmail());
-		}
-		if(member_domain.getName()!=null||!member_domain.getName().equals("")) {
-			member.setName(member_domain.getName());
-		}
-		if(member_domain.getBirthday()!=null||!member_domain.getBirthday().equals("")) {
-			member.setBirthday(member_domain.getBirthday());
-		}
-		if(member_domain.getNickname()!=null||!member_domain.getNickname().equals("")) {
-			Optional<MemberDomain> temp_optional=member_service.nickname_check(member_domain.getNickname());
-			if(temp_optional.isPresent()) {
-				return 1041;
-			}
-			member.setNickname(member_domain.getNickname());
-		}
-		MemberDomain result_member=member_service.update(member_domain);
-		if(result_member!=null) {
-			return 1030;
-		}
-		return 1031;
+	    if (member_domain.getId() == null || member_domain.getId().isEmpty()) {
+	        return 1900; // ID 누락
+	    }
+
+	    Optional<MemberDomain> result_optional = member_service.id_check(member_domain.getId());
+	    if (result_optional.isEmpty()) {
+	        return 1010; // 해당 ID 사용자 없음
+	    }
+
+	    MemberDomain member = result_optional.get();
+
+	    if (member_domain.getPassword() != null && !member_domain.getPassword().isEmpty()) {
+	        member.setPassword(password_encoder.encode(member_domain.getPassword()));
+	    }
+	    if (member_domain.getEmail() != null && !member_domain.getEmail().isEmpty()) {
+	        member.setEmail(member_domain.getEmail());
+	    }
+	    if (member_domain.getName() != null && !member_domain.getName().isEmpty()) {
+	        member.setName(member_domain.getName());
+	    }
+	    if (member_domain.getBirthday() != null && !member_domain.getBirthday().isEmpty()) {
+	        member.setBirthday(member_domain.getBirthday());
+	    }
+	    if (member_domain.getNickname() != null && !member_domain.getNickname().isEmpty()) {
+	        // 닉네임 중복 확인 (자기 자신은 허용)
+	        Optional<MemberDomain> temp_optional = member_service.nickname_check(member_domain.getNickname());
+	        if (temp_optional.isPresent() && !temp_optional.get().getId().equals(member.getId())) {
+	            return 1041; // 닉네임 중복
+	        }
+	        member.setNickname(member_domain.getNickname());
+	    }
+
+	    // 저장
+	    MemberDomain result_member = member_service.update(member);
+	    if (result_member != null) {
+	        return 1030; // 성공
+	    }
+
+	    return 1031; // 저장 실패
 	}
 	
 	@Transactional

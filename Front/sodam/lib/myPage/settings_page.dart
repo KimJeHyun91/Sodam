@@ -43,17 +43,33 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // _settingItem(
+            //   context,
+            //   "회원정보수정",
+            //   enabled: !isGuest,
+            //   onTap: isGuest
+            //       ? null
+            //       : () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => const EditProfilePage()),
+            //     );
+            //   },
+            // ),
             _settingItem(
               context,
               "회원정보수정",
               enabled: !isGuest,
               onTap: isGuest
                   ? null
-                  : () {
-                Navigator.push(
+                  : () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const EditProfilePage()),
                 );
+                if (result == true && context.mounted) {
+                  Navigator.pop(context, true); // SettingsPage도 true로 pop해서 MyPage 새로고침 유도
+                }
               },
             ),
             _settingItem(context, "화면", onTap: () {
