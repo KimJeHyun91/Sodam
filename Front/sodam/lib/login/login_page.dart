@@ -39,9 +39,11 @@ class _LoginPageState extends State<LoginPage> {
           'password': pw,
         },
       );
+      print('로그인 응답: ${response.data}');
 
-      if (response.data == 1020) {
-        // 로그인 아이디 저장 -> 추가
+      final data = response.data;
+
+      if (response.data['message_no'] == 1020) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', response.data['token']);
         await prefs.setString('loggedInId', id);
@@ -49,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),
-              (route) => false, // 이전 스택 다 제거
+              (route) => false,
         );
       } else {
         setState(() {
