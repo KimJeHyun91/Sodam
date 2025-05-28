@@ -18,10 +18,6 @@ public interface PointHistoryRepository extends JpaRepository<PointHistoryDomain
 	
 	@Modifying
 	@Query(value="delete from point_history where point_no=:a", nativeQuery=true)
-	void delete_history_list(@Param("a") Long point_no);
-	
-	@Modifying
-	@Query(value="delete from point_history where point_no=:a", nativeQuery=true)
 	void delete_history_point_no_list(@Param("a") Long point_no);
 
 	@Query("SELECT MAX(ph.point_history_id.point_history_no) FROM POINT_HISTORY ph WHERE ph.point_history_id.point_no = :point_no_param")
