@@ -93,7 +93,7 @@ public class MemberController {
 		if(member_domain.getAuthorization()==null) {
 			member_domain.setAuthorization('U');
 		}
-		
+
 		int member_flag=0;
 		int point_flag=0;
 		
@@ -170,6 +170,7 @@ public class MemberController {
 	
 	@PutMapping("/update")
 	public int update(@RequestBody MemberDomain member_domain) {
+
 	    if (member_domain.getId() == null || member_domain.getId().isEmpty()) {
 	        return 1900; // ID 누락
 	    }
@@ -402,7 +403,5 @@ public class MemberController {
 		}
 		return 1091;
 	}
-	
-	
-	
+
 }

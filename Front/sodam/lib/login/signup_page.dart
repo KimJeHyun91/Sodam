@@ -4,6 +4,7 @@ import 'login_page.dart';
 import '/dio_client.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -33,6 +34,7 @@ class _SignupPageState extends State<SignupPage> {
   bool nicknameInUse = false;
   bool emailInUse = false;
   bool _isFormatting = false;
+  bool emailVerified = false;
 
   bool idTouched = false;
   bool passwordTouched = false;
@@ -241,9 +243,7 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  void _sendVerificationCode() {
-    // 여기에 이메일로 인증번호 보내는 로직을 넣을 수 있어
-    // 예시로 단순 출력만:
+  void _sendVerificationCode() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -252,20 +252,67 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // TODO: 실제 API 요청 보내기
-    print('✅ 인증번호 발송 요청: $email');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$email 주소로 인증번호를 전송했습니다.')),
-    );
+    try {
+      final response = await DioClient.dio.post(
+        '/auth/send-code',
+        data: {'email': email},
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✅ ${response.data.toString()}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ 이메일 전송 실패: ${e.toString()}')),
+      );
+    }
   }
+    void _verifyEmailCode() async {
+      final email = _emailController.text.trim();
+      final code = _emailCodeController.text.trim();
+
+      if (email.isEmpty || code.isEmpty) {
+        setState(() {
+          emailVerified = false;
+          _emailVerifyError = '이메일과 인증번호를 모두 입력해주세요.';
+        });
+        return;
+      }
+
+      try {
+        final response = await DioClient.dio.post(
+          '/auth/verify-code',
+          data: {
+            'email': email,
+            'code': code,
+          },
+        );
+
+        if (response.data == '인증 성공') {
+          setState(() {
+            emailVerified = true;
+            _emailVerifyError = null;
+          });
+        } else {
+          setState(() {
+            emailVerified = false;
+            _emailVerifyError = '인증번호가 올바르지 않습니다.';
+          });
+        }
+      } catch (e) {
+        setState(() {
+          emailVerified = false;
+          _emailVerifyError = '서버 오류로 인증에 실패했습니다.';
+        });
+      }
+    }
+
 
   bool canSubmit() {
     return idValid && idChecked && idAvailable &&
         passwordTouched && passwordValid && passwordConfirmed &&
         _nameError == null && _nicknameError == null && !nicknameInUse &&
         _birthError == null &&
-        _emailController.text.trim().isNotEmpty && !emailInUse &&
+        _emailController.text.trim().isNotEmpty && !emailInUse && emailVerified &&
         agree;
   }
 
@@ -300,6 +347,9 @@ class _SignupPageState extends State<SignupPage> {
         },
       );
       if (context.mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('loggedInId', _idController.text);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('회원가입 성공')),
         );
@@ -341,184 +391,218 @@ class _SignupPageState extends State<SignupPage> {
   String? _nameError;
   String? _nicknameError;
   String? _birthError;
+  String? _emailVerifyError;
 
   @override
   Widget build(BuildContext context) {
     return Theme(
-        data: ThemeData.light().copyWith(brightness: Brightness.light),
-          child: Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
+      data: ThemeData.light().copyWith(brightness: Brightness.light),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
 
-                // ID
-                const Align(alignment: Alignment.centerLeft, child: Text('접속 이름')),
-                TextFormField(
-                  controller: _idController,
-                  decoration: InputDecoration(
-                    hintText: '영소문자 포함 6~15자',
-                    errorText: idTouched ? _idError : null, // 작성 전이면 null, 틀리면 메시지
-                  ),
-                ),
-                if (idTouched && idValid && idChecked && idAvailable)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '사용 가능한 아이디입니다.',
-                      style: const TextStyle(color: Colors.green),
+                  // ID
+                  const Align(alignment: Alignment.centerLeft, child: Text('접속 이름')),
+                  TextFormField(
+                    controller: _idController,
+                    decoration: InputDecoration(
+                      hintText: '영소문자 포함 6~15자',
+                      errorText: idTouched ? _idError : null, // 작성 전이면 null, 틀리면 메시지
                     ),
                   ),
-                const SizedBox(height: 16),
-
-                // Password
-                const Align(alignment: Alignment.centerLeft, child: Text('비밀번호')),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: '영문자+숫자+특수문자 포함, 8~16자리',
-                    errorText: _passwordError,
-                  ),
-                ),
-                if (passwordTouched && passwordValid)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const Text('사용 가능한 비밀번호입니다.', style: TextStyle(color: Colors.green)),
-                  ),
-
-                // Confirm password
-                const Align(alignment: Alignment.centerLeft, child: Text('비밀번호 확인')),
-                TextFormField(controller: _confirmPasswordController, obscureText: true),
-                if (_confirmPasswordController.text.isNotEmpty)
-                  _buildStatusText(passwordConfirmed, '', '비밀번호가 일치하지 않습니다.'),
-                const SizedBox(height: 16),
-
-                // Name
-                const Align(alignment: Alignment.centerLeft, child: Text('이름')),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    errorText: _nameError,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Nickname
-                const Align(alignment: Alignment.centerLeft, child: Text('별칭')),
-                TextFormField(
-                  controller: _nicknameController,
-                  decoration: InputDecoration(
-                    errorText: _nicknameError,
-                  ),
-                ),
-                if (nicknameInUse)
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('사용중인 별칭입니다.', style: TextStyle(color: Colors.red)),
-                  ),
-                const SizedBox(height: 16),
-
-                // Birthday
-                // 생년월일 입력
-                const Align(alignment: Alignment.centerLeft, child: Text('생년월일 (8자리)')),
-                TextFormField(
-                  controller: _birthController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(8),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: '예: 19940428',
-                    errorText: _birthError,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Email
-                const Align(alignment: Alignment.centerLeft, child: Text('손글주소')),
-                TextFormField(controller: _emailController),
-                if (emailInUse)
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('이미 등록된 이메일입니다.', style: TextStyle(color: Colors.red)),
-                  ),
-                const SizedBox(height: 16),
-
-                // 이메일 입력 아래에 추가
-                Row(
-                  children: [
-                    // 인증번호 입력 칸
-                    Expanded(
-                      child: TextFormField(
-                        controller: _emailCodeController,
-                        decoration: const InputDecoration(
-                          hintText: '인증번호 입력',
-                        ),
+                  if (idTouched && idValid && idChecked && idAvailable)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '사용 가능한 아이디입니다.',
+                        style: const TextStyle(color: Colors.green),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    // 인증번호 발송 버튼
-                    ElevatedButton(
-                      onPressed: _sendVerificationCode, // 이 함수는 직접 정의해야 함
+                  const SizedBox(height: 16),
+
+                  // Password
+                  const Align(alignment: Alignment.centerLeft, child: Text('비밀번호')),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: '영문자+숫자+특수문자 포함, 8~16자리',
+                      errorText: _passwordError,
+                    ),
+                  ),
+                  if (passwordTouched && passwordValid)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: const Text('사용 가능한 비밀번호입니다.', style: TextStyle(color: Colors.green)),
+                    ),
+
+                  // Confirm password
+                  const Align(alignment: Alignment.centerLeft, child: Text('비밀번호 확인')),
+                  TextFormField(controller: _confirmPasswordController, obscureText: true),
+                  if (_confirmPasswordController.text.isNotEmpty)
+                    _buildStatusText(passwordConfirmed, '', '비밀번호가 일치하지 않습니다.'),
+                  const SizedBox(height: 16),
+
+                  // Name
+                  const Align(alignment: Alignment.centerLeft, child: Text('이름')),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      errorText: _nameError,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Nickname
+                  const Align(alignment: Alignment.centerLeft, child: Text('별칭')),
+                  TextFormField(
+                    controller: _nicknameController,
+                    decoration: InputDecoration(
+                      errorText: _nicknameError,
+                    ),
+                  ),
+                  if (nicknameInUse)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('사용중인 별칭입니다.', style: TextStyle(color: Colors.red)),
+                    ),
+                  const SizedBox(height: 16),
+
+                  // Birthday
+                  // 생년월일 입력
+                  const Align(alignment: Alignment.centerLeft, child: Text('생년월일 (8자리)')),
+                  TextFormField(
+                    controller: _birthController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(8),
+                    ],
+                    decoration: InputDecoration(
+                      hintText: '예: 19940428',
+                      errorText: _birthError,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Email
+                  const Align(alignment: Alignment.centerLeft, child: Text('손글주소')),
+                  TextFormField(controller: _emailController),
+                  if (emailInUse)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('이미 등록된 이메일입니다.', style: TextStyle(color: Colors.red)),
+                    ),
+                  const SizedBox(height: 16),
+
+                  // 이메일 입력 아래에 추가
+                  Row(
+                    children: [
+                      // 인증번호 입력 칸
+                      Expanded(
+                        child: TextFormField(
+                          controller: _emailCodeController,
+                          decoration: const InputDecoration(
+                            hintText: '인증번호 입력',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // 인증번호 발송 버튼
+                      ElevatedButton(
+                        onPressed: _sendVerificationCode,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD3E3BC),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                        child: const Text(
+                          '발송',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // ✅ 인증번호 확인 버튼
+                      ElevatedButton(
+                        onPressed: _verifyEmailCode,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFCCE5FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                        child: const Text(
+                          '확인',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (emailVerified)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '이메일 인증이 완료되었습니다.',
+                        style: TextStyle(color: Colors.green),
+                      ),
+                    ),
+                  if (_emailVerifyError != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _emailVerifyError!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  // 개인정보 동의
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: agree,
+                        onChanged: (val) => setState(() => agree = val ?? false),
+                      ),
+                      const Text('개인정보 수집 및 이용에 동의합니다.'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Submit button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: canSubmit() ? _signup : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD3E3BC), // 연한 연두색
+                        backgroundColor: canSubmit() ? const Color(0xFFD3E3BC) : Colors.grey[300], // 활성: 연두 / 비활성: 회색
+                        foregroundColor: Colors.black, // 텍스트 색
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
-                      child: const Text(
-                        '인증번호 발송',
-                        style: TextStyle(color: Colors.black),
-                      ),
+                      child: const Text('가입완료'),
                     ),
-                  ],
-                ),
-
-                // 개인정보 동의
-                Row(
-                  children: [
-                    Checkbox(
-                      value: agree,
-                      onChanged: (val) => setState(() => agree = val ?? false),
-                    ),
-                    const Text('개인정보 수집 및 이용에 동의합니다.'),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Submit button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: canSubmit() ? _signup : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: canSubmit() ? const Color(0xFFD3E3BC) : Colors.grey[300], // 활성: 연두 / 비활성: 회색
-                      foregroundColor: Colors.black, // 텍스트 색
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('가입완료'),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-          ),
     );
   }
 }
