@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DioClient {
   static final Dio _dio = Dio(
@@ -10,7 +11,18 @@ class DioClient {
         'Content-Type': 'application/json',
       },
     ),
-  );
+  )..interceptors.add(InterceptorsWrapper(
+    onRequest: (options, handler) async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+
+      return handler.next(options); // 다음 interceptor로 넘김
+    },
+  ));
 
   static Dio get dio => _dio;
 }

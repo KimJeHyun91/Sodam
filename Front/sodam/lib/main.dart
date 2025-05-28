@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'intro_page.dart';
 import 'main_page.dart';
+import 'login/auth_choice_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -52,9 +53,12 @@ class _MyAppState extends State<MyApp> {
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString('loggedInId');
+    final token = prefs.getString('token');
 
     setState(() {
-      _initialScreen = id != null ? const MainPage() : const IntroPage(); // ✅ 분기
+      _initialScreen = (id != null && token != null)
+          ? const MainPage()
+          : const AuthChoicePage(); // 둘 다 있을 때만 MainPage
     });
   }
 

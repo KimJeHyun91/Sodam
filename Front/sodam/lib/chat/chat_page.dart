@@ -73,8 +73,8 @@ Widget _neighborList(BuildContext context) {
   return Column(
     children: [
       _neighborItem(context, '김제현', 'kjh910920'),
-      _neighborItem(context, '이하늘', 'harull817@gmail.com', image: 'assets/dog.png'),
-      _neighborItem(context, '정용태', 'grand7246@gmail.com', image: 'assets/tree.png'),
+      _neighborItem(context, '이하늘', 'harull817@gmail.com'),
+      _neighborItem(context, '정용태', 'grand7246@gmail.com'),
     ],
   );
 }
@@ -115,7 +115,6 @@ Widget _secretChatList(BuildContext context, List<ChatRoomModel> customRooms) {
         context,
         '김철수',
         '둥글게 둥글게 빙글빙글 돌아가며 춤을 춥시다',
-        image: 'assets/kim.png',
       ),
       _chatRoomItem(
         context,
