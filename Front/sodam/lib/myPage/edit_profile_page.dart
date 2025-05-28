@@ -1,3 +1,213 @@
+// import 'package:flutter/material.dart';
+// import 'package:dio/dio.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'dart:io';
+// import 'package:image_picker/image_picker.dart';
+//
+// class EditProfilePage extends StatefulWidget {
+//   const EditProfilePage({super.key});
+//
+//   @override
+//   State<EditProfilePage> createState() => _EditProfilePageState();
+// }
+//
+// class _EditProfilePageState extends State<EditProfilePage> {
+//   final Dio dio = Dio();
+//   final TextEditingController nicknameController = TextEditingController();
+//   final TextEditingController passwordController = TextEditingController();
+//   final TextEditingController confirmPasswordController = TextEditingController();
+//   final TextEditingController emailController = TextEditingController();
+//   final TextEditingController nameController = TextEditingController();
+//   final TextEditingController birthdayController = TextEditingController();
+//
+//   bool isLoading = true;
+//   bool isFormValid = false;
+//
+//   String? originalNickname;
+//   String? originalPassword;
+//   String? originalEmail;
+//   String? originalName;
+//   String? originalBirthday;
+//
+//   File? _selectedImage;
+//   final ImagePicker _picker = ImagePicker();
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     loadUserInfo();
+//
+//     nicknameController.addListener(_validateForm);
+//     passwordController.addListener(_validateForm);
+//     confirmPasswordController.addListener(_validateForm);
+//     emailController.addListener(_validateForm);
+//     nameController.addListener(_validateForm);
+//     birthdayController.addListener(_validateForm);
+//   }
+//
+//   Future<void> _pickImage() async {
+//     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+//     if (image != null) {
+//       setState(() {
+//         _selectedImage = File(image.path);
+//       });
+//     }
+//   }
+//
+//   void _showPhotoOptions() {
+//     showModalBottomSheet(
+//       context: context,
+//       shape: const RoundedRectangleBorder(
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+//       ),
+//       builder: (_) {
+//         return SafeArea(
+//           child: Wrap(
+//             children: [
+//               ListTile(
+//                 leading: const Icon(Icons.photo),
+//                 title: const Text('사진 앨범에서 선택'),
+//                 onTap: () {
+//                   Navigator.pop(context);
+//                   _pickImage();
+//                 },
+//               ),
+//               ListTile(
+//                 leading: const Icon(Icons.close),
+//                 title: const Text('취소'),
+//                 onTap: () => Navigator.pop(context),
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
+//   }
+//
+//   void _validateForm() {
+//     final nickname = nicknameController.text.trim();
+//     final password = passwordController.text.trim();
+//     final confirmPassword = confirmPasswordController.text.trim();
+//     final email = emailController.text.trim();
+//     final name = nameController.text.trim();
+//     final birthday = birthdayController.text.trim();
+//
+//     final nicknameChanged = originalNickname != null && nickname != originalNickname;
+//     final emailChanged = originalEmail != null && email != originalEmail;
+//     final nameChanged = originalName != null && name != originalName;
+//     final birthdayChanged = originalBirthday != null && birthday != originalBirthday;
+//
+//     final passwordFilled = password.isNotEmpty && confirmPassword.isNotEmpty;
+//     final passwordMatch = password == confirmPassword;
+//     final passwordChanged = password != originalPassword;
+//     final passwordValid = passwordFilled && passwordMatch && passwordChanged;
+//
+//     final valid = nicknameChanged || emailChanged || nameChanged || birthdayChanged || passwordValid;
+//
+//     if (valid != isFormValid) {
+//       setState(() {
+//         isFormValid = valid;
+//       });
+//     }
+//   }
+//
+//   Future<void> loadUserInfo() async {
+//     try {
+//       final prefs = await SharedPreferences.getInstance();
+//       final id = prefs.getString('loggedInId');
+//
+//       final token = prefs.getString('jwtToken'); // 로그인 시 저장해둔 토큰
+//
+//       if (id == null) {
+//         nicknameController.text = '비회원';
+//         setState(() => isLoading = false);
+//         return;
+//       }
+//
+//       final response = await dio.get(
+//         'http://10.0.2.2:8080/member/get_member_object',
+//         queryParameters: {'id': id},
+//       );
+//
+//       if (response.data is Map<String, dynamic>) {
+//         final data = response.data;
+//         nicknameController.text = data['nickname'] ?? '';
+//         originalNickname = nicknameController.text;
+//         passwordController.clear();
+//         confirmPasswordController.clear();
+//         originalPassword = data['password'] ?? '';
+//         emailController.text = data['email'] ?? '';
+//         originalEmail = emailController.text;
+//         nameController.text = data['name'] ?? '';
+//         originalName = nameController.text;
+//         birthdayController.text = data['birthday'] ?? '';
+//         originalBirthday = birthdayController.text;
+//       }
+//
+//       setState(() => isLoading = false);
+//     } catch (e) {
+//       print("회원 정보 로딩 실패: $e");
+//       nicknameController.text = '에러';
+//       setState(() => isLoading = false);
+//     }
+//   }
+//
+//   Future<void> _handleSubmit() async {
+//     final nickname = nicknameController.text.trim();
+//     final password = passwordController.text.trim();
+//     final email = emailController.text.trim();
+//     final name = nameController.text.trim();
+//     final birthday = birthdayController.text.trim();
+//
+//     final prefs = await SharedPreferences.getInstance();
+//     final id = prefs.getString('loggedInId');
+//
+//     if (id == null) return;
+//
+//     final data = {"id": id};
+//     if (nickname != originalNickname) data["nickname"] = nickname;
+//     if (password.isNotEmpty && password == confirmPasswordController.text && password != originalPassword) {
+//       data["password"] = password;
+//     }
+//     if (email != originalEmail) data["email"] = email;
+//     if (name != originalName) data["name"] = name;
+//     if (birthday != originalBirthday) data["birthday"] = birthday;
+//
+//     try {
+//       final response = await dio.put(
+//         'http://10.0.2.2:8080/member/update',
+//         data: data,
+//       );
+//
+//       if (response.data == 1030) {
+//         showDialog(
+//           context: context,
+//           builder: (context) => AlertDialog(
+//             title: const Text("수정 완료"),
+//             content: const Text("회원 정보가 성공적으로 수정되었습니다."),
+//             actions: [
+//               TextButton(
+//                 onPressed: () {
+//                   Navigator.pop(context);
+//                   Navigator.pop(context, true);
+//                 },
+//                 child: const Text("확인"),
+//               ),
+//             ],
+//           ),
+//         );
+//       } else {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text("수정에 실패했습니다")),
+//         );
+//       }
+//     } catch (e) {
+//       print("수정 실패: $e");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text("서버 요청 중 오류 발생")),
+//       );
+//     }
+//   }
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -111,10 +321,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  Future<Options> _authOptions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+    return Options(headers: {'Authorization': 'Bearer $token'});
+  }
+
   Future<void> loadUserInfo() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getString('loggedInId');
+      final options = await _authOptions();
 
       if (id == null) {
         nicknameController.text = '비회원';
@@ -125,6 +342,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final response = await dio.get(
         'http://10.0.2.2:8080/member/get_member_object',
         queryParameters: {'id': id},
+        options: options,
       );
 
       if (response.data is Map<String, dynamic>) {
@@ -159,6 +377,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString('loggedInId');
+    final options = await _authOptions();
 
     if (id == null) return;
 
@@ -175,6 +394,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final response = await dio.put(
         'http://10.0.2.2:8080/member/update',
         data: data,
+        options: options,
       );
 
       if (response.data == 1030) {
