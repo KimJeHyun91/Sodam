@@ -1,33 +1,43 @@
 package com.sodam.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.sodam.domain.BlockedDeviceDomain;
 import com.sodam.domain.BluetoothConnectedDeviceDomain;
 import com.sodam.domain.MemberDomain;
 import com.sodam.domain.PointDomain;
 import com.sodam.domain.PointHistoryDomain;
+import com.sodam.domain.UserImageDomain;
 import com.sodam.domain.UserRewardItemDomain;
 import com.sodam.service.BlockedDeviceService;
 import com.sodam.service.BluetoothConnectedDeviceService;
 import com.sodam.service.MemberService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
+import com.sodam.service.UserImageService;
 import com.sodam.service.UserRewardItemService;
 
+import jakarta.mail.Multipart;
 import jakarta.transaction.Transactional;
 
 @RestController
@@ -47,6 +57,8 @@ public class MemberController {
 	BlockedDeviceService blocked_device_service;
 	@Autowired
 	UserRewardItemService user_reward_item_service;
+	@Autowired
+	UserImageService user_image_service;
 	
 	@Transactional
 	@PostMapping("/add")
@@ -67,6 +79,9 @@ public class MemberController {
 				) {
 			return 1900;
 		}
+		if(member_domain.getAuthorization()==null) {
+			member_domain.setAuthorization('U');
+		}
 		
 		int member_flag=0;
 		int point_flag=0;
@@ -84,6 +99,7 @@ public class MemberController {
 			// 포인트 테이블 생성
 			PointDomain point_domain=new PointDomain();
 			point_domain.setId(result_member.getId());
+			point_domain.setCurrent_point(0L);
 			PointDomain result_point=point_service.create(point_domain);
 			if(result_point!=null) {
 				point_flag=1;
@@ -273,4 +289,95 @@ public class MemberController {
 	public List<MemberDomain> get_member_email_object(@RequestParam("email") String email){
 		return member_service.get_member_email_object(email);
 	}
+	
+	@PostMapping("/add_image/{id}")
+	public int add_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
+		if(		
+				id==null||
+				id.equals("")||
+				image==null||
+				image.equals("")
+		) {
+			return 1900;
+		}
+		
+		UserImageDomain user_image_domain=new UserImageDomain();
+		user_image_domain.setId(id);
+		try {
+			user_image_domain.setImage(image.getBytes());
+			UserImageDomain result_user_image=user_image_service.add_image(user_image_domain);
+			if(result_user_image!=null) {
+				return 1070;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return 1071;
+		}
+		
+		return 1071;
+	}
+	
+	@GetMapping("/get_image")
+	public ResponseEntity<byte[]> get_image(@RequestParam("id") String id) {
+		if(id==null||id.equals("")) {
+			return null;
+		}
+		
+		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
+		if(user_image_optional.isPresent()) {
+			UserImageDomain user_image_domain=user_image_optional.get();
+			byte[] image=user_image_domain.getImage();
+			if(image==null||image.length==0) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+			}
+			HttpHeaders http_headers=new HttpHeaders();
+			http_headers.setContentType(MediaType.IMAGE_PNG);
+			http_headers.setContentLength(image.length);
+			return new ResponseEntity<>(image, http_headers, HttpStatus.OK);
+			
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+	}
+	
+	@PutMapping("/update_image/{id}")
+	public int update_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
+		if(id==null||id.equals("")||image==null||image.equals("")) {
+			return 1900;
+		}
+		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
+		if(user_image_optional.isEmpty()) {
+			return 1081;
+		}
+		UserImageDomain user_image_domain=user_image_optional.get();
+		try {
+			user_image_domain.setImage(image.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+			return 1081;
+		}
+		UserImageDomain result_user_image=user_image_service.update_image(user_image_domain);
+		if(result_user_image!=null) {
+			return 1080;
+		}
+		return 1081;
+	}
+	
+	@DeleteMapping("/delete_image")
+	public int delete_image(@RequestParam("id") String id) {
+		if(id==null||id.equals("")) {
+			return 1900;
+		}
+		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
+		if(user_image_optional.isEmpty()) {
+			return 1091;
+		}
+		Optional<UserImageDomain> result_user_image=user_image_service.delete_image(id);
+		if(result_user_image.isEmpty()) {
+			return 1090;
+		}
+		return 1091;
+	}
+	
+	
+	
 }
