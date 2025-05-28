@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,15 +30,19 @@ import com.sodam.domain.PointDomain;
 import com.sodam.domain.PointHistoryDomain;
 import com.sodam.domain.UserImageDomain;
 import com.sodam.domain.UserRewardItemDomain;
+import com.sodam.dto.LoginRequestDto;
+import com.sodam.dto.LoginResponseDto;
 import com.sodam.service.BlockedDeviceService;
 import com.sodam.service.BluetoothConnectedDeviceService;
 import com.sodam.service.MemberService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
+import com.sodam.service.UserDetailsServiceImplement;
 import com.sodam.service.UserImageService;
 import com.sodam.service.UserRewardItemService;
+import com.sodam.util.JwtUtil;
 
-import jakarta.mail.Multipart;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 
 @RestController
@@ -45,8 +50,6 @@ import jakarta.transaction.Transactional;
 public class MemberController {
 	@Autowired
 	MemberService member_service;
-	@Autowired
-	PasswordEncoder password_encoder;
 	@Autowired
 	PointService point_service;
 	@Autowired
@@ -59,6 +62,14 @@ public class MemberController {
 	UserRewardItemService user_reward_item_service;
 	@Autowired
 	UserImageService user_image_service;
+	@Autowired
+	private AuthenticationManager authentication_manager;
+	@Autowired
+	private JwtUtil jwt_util;
+	@Autowired
+	private UserDetailsServiceImplement user_details_service_implement; 
+	@Autowired
+	PasswordEncoder password_encoder;
 	
 	@Transactional
 	@PostMapping("/add")
@@ -126,60 +137,77 @@ public class MemberController {
 		return 1010;
 	}
 	
-	@GetMapping("/login")
-	public int login(@RequestParam("id") String id, @RequestParam("password") String password) {
-		if(id==null||id.equals("")) {
-			return 1900;
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody LoginRequestDto login_request_dto) {
+		if(
+				login_request_dto.getId()==null||
+				login_request_dto.getId().equals("")||
+				login_request_dto.getPassword()==null||
+				login_request_dto.getPassword().equals("")
+				) {
+			
+			return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body(new LoginResponseDto(null, 1900, null, null));
 		}
-		Optional<MemberDomain> result_optional=member_service.id_check(id);
-		if(result_optional.isEmpty()) {
-			return 1010;
+		try {
+			authentication_manager.authenticate(
+					new UsernamePasswordAuthenticationToken(login_request_dto.getId(), login_request_dto.getPassword())
+			);
+		}catch(BadCredentialsException e) {
+			return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body(new LoginResponseDto(null, 1021, null, null));
+		}catch(Exception e) {
+			return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body(new LoginResponseDto(null, 1021, null, null));
 		}
-		MemberDomain result_domain=result_optional.get();
-		boolean result_flag=password_encoder.matches(password, result_domain.getPassword());
-		if(result_flag) {
-			return 1020;
-		}
-		return 1021;
+		
+		final UserDetails user_details=user_details_service_implement.loadUserByUsername(login_request_dto.getId());
+		
+		Optional<MemberDomain> member_optional=member_service.get_member_object(login_request_dto.getId());
+		String nickname=member_optional.map(MemberDomain::getNickname).orElse(null);
+		
+		final String jwt=jwt_util.generateToken(user_details.getUsername());
+		
+		return ResponseEntity.ok(new LoginResponseDto(jwt, 1020, user_details.getUsername(), nickname));
 	}
 	
 	@PutMapping("/update")
 	public int update(@RequestBody MemberDomain member_domain) {
-		if(
-				member_domain.getId()==null||
-				member_domain.getId().equals("")
-				) {
-			return 1900;
-		}
-		Optional<MemberDomain> result_optional=member_service.id_check(member_domain.getId());
-		if(result_optional.isEmpty()) {
-			return 1010;
-		}
-		MemberDomain member=result_optional.get();
-		if(member_domain.getPassword()!=null||!member_domain.getPassword().equals("")) {
-			member.setPassword(password_encoder.encode(member_domain.getPassword()));
-		}
-		if(member_domain.getEmail()!=null||!member_domain.getEmail().equals("")) {
-			member.setEmail(member_domain.getEmail());
-		}
-		if(member_domain.getName()!=null||!member_domain.getName().equals("")) {
-			member.setName(member_domain.getName());
-		}
-		if(member_domain.getBirthday()!=null||!member_domain.getBirthday().equals("")) {
-			member.setBirthday(member_domain.getBirthday());
-		}
-		if(member_domain.getNickname()!=null||!member_domain.getNickname().equals("")) {
-			Optional<MemberDomain> temp_optional=member_service.nickname_check(member_domain.getNickname());
-			if(temp_optional.isPresent()) {
-				return 1041;
-			}
-			member.setNickname(member_domain.getNickname());
-		}
-		MemberDomain result_member=member_service.update(member_domain);
-		if(result_member!=null) {
-			return 1030;
-		}
-		return 1031;
+	    if (member_domain.getId() == null || member_domain.getId().isEmpty()) {
+	        return 1900; // ID 누락
+	    }
+
+	    Optional<MemberDomain> result_optional = member_service.id_check(member_domain.getId());
+	    if (result_optional.isEmpty()) {
+	        return 1010; // 해당 ID 사용자 없음
+	    }
+
+	    MemberDomain member = result_optional.get();
+
+	    if (member_domain.getPassword() != null && !member_domain.getPassword().isEmpty()) {
+	        member.setPassword(password_encoder.encode(member_domain.getPassword()));
+	    }
+	    if (member_domain.getEmail() != null && !member_domain.getEmail().isEmpty()) {
+	        member.setEmail(member_domain.getEmail());
+	    }
+	    if (member_domain.getName() != null && !member_domain.getName().isEmpty()) {
+	        member.setName(member_domain.getName());
+	    }
+	    if (member_domain.getBirthday() != null && !member_domain.getBirthday().isEmpty()) {
+	        member.setBirthday(member_domain.getBirthday());
+	    }
+	    if (member_domain.getNickname() != null && !member_domain.getNickname().isEmpty()) {
+	        // 닉네임 중복 확인 (자기 자신은 허용)
+	        Optional<MemberDomain> temp_optional = member_service.nickname_check(member_domain.getNickname());
+	        if (temp_optional.isPresent() && !temp_optional.get().getId().equals(member.getId())) {
+	            return 1041; // 닉네임 중복
+	        }
+	        member.setNickname(member_domain.getNickname());
+	    }
+
+	    MemberDomain result_member = member_service.update(member);
+	    if (result_member != null) {
+	        return 1030;
+	    }
+
+	    return 1031;
 	}
 	
 	@Transactional
@@ -318,7 +346,7 @@ public class MemberController {
 	}
 	
 	@GetMapping("/get_image")
-	public ResponseEntity<byte[]> get_image(@RequestParam("id") String id) {
+	public byte[] get_image(@RequestParam("id") String id) {
 		if(id==null||id.equals("")) {
 			return null;
 		}
@@ -328,15 +356,12 @@ public class MemberController {
 			UserImageDomain user_image_domain=user_image_optional.get();
 			byte[] image=user_image_domain.getImage();
 			if(image==null||image.length==0) {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+				return null;
 			}
-			HttpHeaders http_headers=new HttpHeaders();
-			http_headers.setContentType(MediaType.IMAGE_PNG);
-			http_headers.setContentLength(image.length);
-			return new ResponseEntity<>(image, http_headers, HttpStatus.OK);
+			return image;
 			
 		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+		return null;
 	}
 	
 	@PutMapping("/update_image/{id}")

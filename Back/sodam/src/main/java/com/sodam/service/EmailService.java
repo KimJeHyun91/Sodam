@@ -49,11 +49,14 @@ public class EmailService {
             helper.setText("<h3>인증번호: <strong>" + code + "</strong><br/>유효시간: 3분</h3>", true);
 
             mailSender.send(message);
+            System.out.println("✅ 인증코드 [" + code + "] 를 이메일 [" + email + "] 로 발송했습니다.");
+
+            authCodeStore.put(email, new AuthCodeEntry(code, expiresAt));
+
         } catch (MessagingException e) {
+            e.printStackTrace();
             throw new RuntimeException("이메일 전송 실패", e);
         }
-
-        authCodeStore.put(email, new AuthCodeEntry(code, expiresAt));
     }
 
     public boolean verifyCode(String email, String inputCode) {
