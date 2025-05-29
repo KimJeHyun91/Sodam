@@ -1,6 +1,7 @@
 package com.sodam.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import com.sodam.domain.PointHistoryDomain;
 import com.sodam.domain.UserRewardItemDomain;
 import com.sodam.service.BlockedDeviceService;
 import com.sodam.service.BluetoothConnectedDeviceService;
+import com.sodam.service.EmailService;
 import com.sodam.service.MemberService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
@@ -47,6 +49,9 @@ public class MemberController {
 	BlockedDeviceService blocked_device_service;
 	@Autowired
 	UserRewardItemService user_reward_item_service;
+	@Autowired
+	private EmailService emailService;
+
 	
 	@Transactional
 	@PostMapping("/add")
@@ -67,6 +72,7 @@ public class MemberController {
 				) {
 			return 1900;
 		}
+		member_domain.setAuthorization('U');
 		
 		int member_flag=0;
 		int point_flag=0;
@@ -84,6 +90,7 @@ public class MemberController {
 			// 포인트 테이블 생성
 			PointDomain point_domain=new PointDomain();
 			point_domain.setId(result_member.getId());
+			point_domain.setCurrent_point(0L);
 			PointDomain result_point=point_service.create(point_domain);
 			if(result_point!=null) {
 				point_flag=1;
@@ -273,4 +280,45 @@ public class MemberController {
 	public List<MemberDomain> get_member_email_object(@RequestParam("email") String email){
 		return member_service.get_member_email_object(email);
 	}
+	
+	@GetMapping("/find-id")
+	public Map<String, String> findId(@RequestParam("email") String email) {
+	    if (email == null || email.isBlank()) {
+	        throw new IllegalArgumentException("이메일은 필수입니다.");
+	    }
+
+	    Optional<MemberDomain> result = member_service.email_check(email);
+	    if (result.isEmpty()) {
+	        throw new RuntimeException("해당 이메일로 가입된 사용자가 없습니다.");
+	    }
+	    String fullId = result.get().getId();
+	    return Map.of("id", fullId);
+	}
+	@PostMapping("/reset-password")
+	public int resetPassword(@RequestBody Map<String, String> request) {
+	    String email = request.get("email");
+	    String code = request.get("code");
+	    String newPassword = request.get("newPassword");
+
+	    if (email == null || code == null || newPassword == null) {
+	        return 1900; 
+	    }
+	    boolean verified = emailService.verifyCode(email, code);
+	    if (!verified) {
+	        return 1051; 
+	    }
+	    Optional<MemberDomain> optional = member_service.email_check(email);
+	    if (optional.isEmpty()) {
+	        return 1010; 
+	    }
+	    MemberDomain member = optional.get();
+	    if (password_encoder.matches(newPassword, member.getPassword())) {
+	        return 1052;
+	    }
+	    member.setPassword(password_encoder.encode(newPassword));
+	    MemberDomain updated = member_service.update(member);
+	    return (updated != null) ? 1050 : 1051;
+	}
+
+
 }

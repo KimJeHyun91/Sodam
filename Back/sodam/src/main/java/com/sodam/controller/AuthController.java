@@ -1,124 +1,136 @@
 package com.sodam.controller;
 
+import com.sodam.domain.MemberDomain;
+import com.sodam.service.EmailService;
+import com.sodam.service.MemberService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Qualifier;
-import com.sodam.domain.MemberDomain;
-import com.sodam.dto.CodeVerificationDto;
-import com.sodam.dto.EmailDto;
-import com.sodam.dto.LoginRequest;
-import com.sodam.dto.LoginResponse;
-import com.sodam.dto.PasswordResetDto;
-import com.sodam.security.JwtTokenProvider;
-import com.sodam.service.MemberService;
-
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider tokenProvider;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final MemberService memberService;
     private final PasswordEncoder passwordEncoder;
 
-    // 메모리 내 임시 인증코드 저장
-    private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
-
-    @Autowired
-    public AuthController(
-        AuthenticationManager authenticationManager,
-        JwtTokenProvider tokenProvider,
-        JavaMailSender mailSender,
-        @Qualifier("passwordEncoder") PasswordEncoder passwordEncoder,  // 명시
-        MemberService memberService
-    ) {
-        this.authenticationManager = authenticationManager;
-        this.tokenProvider = tokenProvider;
-        this.mailSender = mailSender;
-        this.passwordEncoder = passwordEncoder;
-        this.memberService = memberService;
-    }
-
-    // ✅ 로그인 - JWT 발급
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getId(), request.getPassword())
+    
+    @PostMapping("/send-code-signup")
+    public ResponseEntity<?> sendCodeForSignup(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "이메일은 필수입니다.")
             );
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String token = tokenProvider.generateToken(userDetails.getUsername());
-
-            return ResponseEntity.ok(new LoginResponse(token));
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
+
+        emailService.sendVerificationCode(email);
+        return ResponseEntity.ok(Map.of("status", "success", "message", "인증번호가 전송되었습니다."));
     }
 
-    // ✅ 이메일로 인증번호 전송
-    @PostMapping("/send-code")
-    public ResponseEntity<?> sendVerificationCode(@RequestBody EmailDto request) {
-        String code = String.valueOf((int)(Math.random() * 900000) + 100000); // 6자리 숫자
-        verificationCodes.put(request.getEmail(), code);
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(request.getEmail());
-        message.setSubject("Sodam 인증번호입니다");
-        message.setText("인증번호: " + code);
-
-        try {
-            mailSender.send(message);
-            return ResponseEntity.ok("인증번호가 전송되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("메일 전송에 실패했습니다.");
+    
+    @PostMapping("/send-code-find-id")
+    public ResponseEntity<?> sendCodeForFindId(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "이메일은 필수입니다.")
+            );
         }
+
+        if (memberService.email_check(email).isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "등록되지 않은 이메일입니다.")
+            );
+        }
+
+        emailService.sendVerificationCode(email);
+        return ResponseEntity.ok(Map.of("status", "success", "message", "인증번호가 전송되었습니다."));
     }
 
-    // ✅ 인증번호 확인
+    
+    @PostMapping("/send-code-reset-pw")
+    public ResponseEntity<?> sendCodeForResetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "이메일은 필수입니다.")
+            );
+        }
+
+        if (memberService.email_check(email).isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "등록되지 않은 이메일입니다.")
+            );
+        }
+
+        emailService.sendVerificationCode(email);
+        return ResponseEntity.ok(Map.of("status", "success", "message", "인증번호가 전송되었습니다."));
+    }
+
+    
     @PostMapping("/verify-code")
-    public ResponseEntity<?> verifyCode(@RequestBody CodeVerificationDto dto) {
-        String expectedCode = verificationCodes.get(dto.getEmail());
-        if (expectedCode != null && expectedCode.equals(dto.getCode())) {
-            verificationCodes.remove(dto.getEmail()); // 성공 후 삭제
-            return ResponseEntity.ok("인증 성공");
-        } else {
-            return ResponseEntity.status(400).body("인증 실패");
+    public ResponseEntity<?> verifyCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+
+        if (email == null || code == null) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "이메일과 인증코드를 모두 입력하세요.")
+            );
         }
+
+        if (!emailService.codeExists(email)) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "인증번호가 만료되었습니다.")
+            );
+        }
+
+        if (!emailService.isCodeCorrect(email, code)) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "fail", "message", "인증번호가 일치하지 않습니다.")
+            );
+        }
+
+        return ResponseEntity.ok(Map.of("status", "success"));
     }
 
-    // ✅ 인증 후 비밀번호 재설정
+    
+   
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetDto dto) {
-        Optional<MemberDomain> memberOpt = memberService.email_check(dto.getEmail());
+    public ResponseEntity<Integer> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+        String newPassword = request.get("newPassword");
 
-        if (memberOpt.isPresent()) {
-            MemberDomain member = memberOpt.get();
-            member.setPassword(passwordEncoder.encode(dto.getNewPassword())); // 암호화
-            memberService.update(member);
-            return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
-        } else {
-            return ResponseEntity.status(404).body("해당 이메일을 찾을 수 없습니다.");
+        if (email == null || code == null || newPassword == null) {
+            return ResponseEntity.ok(1900); 
         }
+
+        if (!emailService.verifyCode(email, code)) {
+            return ResponseEntity.ok(1051); 
+        }
+
+        Optional<MemberDomain> optional = memberService.email_check(email);
+        if (optional.isEmpty()) {
+            return ResponseEntity.ok(1010); 
+        }
+
+        MemberDomain member = optional.get();
+
+        if (passwordEncoder.matches(newPassword, member.getPassword())) {
+            return ResponseEntity.ok(1052); 
+        }
+
+        member.setPassword(passwordEncoder.encode(newPassword));
+        MemberDomain updated = memberService.update(member);
+
+        return ResponseEntity.ok(updated != null ? 1050 : 1051); 
     }
 }
