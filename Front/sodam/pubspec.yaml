@@ -37,7 +37,9 @@ dependencies:
   shared_preferences: ^2.2.0
   table_calendar: ^3.0.9
   image_picker: ^1.0.4
-#  file_picker: ^6.2.1
+  permission_handler: ^12.0.0+1
+  flutter_ble_peripheral: ^1.0.0
+  #  file_picker: ^6.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

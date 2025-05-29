@@ -2,6 +2,7 @@ package com.sodam.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ import com.sodam.dto.LoginRequestDto;
 import com.sodam.dto.LoginResponseDto;
 import com.sodam.service.BlockedDeviceService;
 import com.sodam.service.BluetoothConnectedDeviceService;
+import com.sodam.service.EmailService;
 import com.sodam.service.MemberService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
@@ -61,15 +63,9 @@ public class MemberController {
 	@Autowired
 	UserRewardItemService user_reward_item_service;
 	@Autowired
-	UserImageService user_image_service;
-	@Autowired
-	private AuthenticationManager authentication_manager;
-	@Autowired
-	private JwtUtil jwt_util;
-	@Autowired
-	private UserDetailsServiceImplement user_details_service_implement; 
-	@Autowired
-	PasswordEncoder password_encoder;
+	private EmailService emailService;
+
+
 	
 	@Transactional
 	@PostMapping("/add")
@@ -90,9 +86,11 @@ public class MemberController {
 				) {
 			return 1900;
 		}
+
 		if(member_domain.getAuthorization()==null) {
 			member_domain.setAuthorization('U');
 		}
+
 
 		int member_flag=0;
 		int point_flag=0;
@@ -319,6 +317,36 @@ public class MemberController {
 		return member_service.get_member_email_object(email);
 	}
 	
+
+
+	@PostMapping("/reset-password")
+	public int resetPassword(@RequestBody Map<String, String> request) {
+	    String email = request.get("email");
+	    String code = request.get("code");
+	    String newPassword = request.get("newPassword");
+
+	    if (email == null || code == null || newPassword == null) {
+	        return 1900; 
+	    }
+	    boolean verified = emailService.verifyCode(email, code);
+	    if (!verified) {
+	        return 1051; 
+	    }
+	    Optional<MemberDomain> optional = member_service.email_check(email);
+	    if (optional.isEmpty()) {
+	        return 1010; 
+	    }
+	    MemberDomain member = optional.get();
+	    if (password_encoder.matches(newPassword, member.getPassword())) {
+	        return 1052;
+	    }
+	    member.setPassword(password_encoder.encode(newPassword));
+	    MemberDomain updated = member_service.update(member);
+	    return (updated != null) ? 1050 : 1051;
+	}
+
+
+
 	@PostMapping("/add_image/{id}")
 	public int add_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
 		if(		
@@ -403,5 +431,6 @@ public class MemberController {
 		}
 		return 1091;
 	}
+
 
 }

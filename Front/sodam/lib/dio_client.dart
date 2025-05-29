@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DioClient {
   static final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://10.0.2.2:8080', // Android 에뮬레이터 기준
+      baseUrl: 'http://10.0.2.2:8080',
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 5),
       headers: {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'login_page.dart';
-import '/dio_client.dart';
+import '../dio_client.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -254,17 +254,69 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       final response = await DioClient.dio.post(
-        '/auth/send-code',
+
+        '/auth/send-code-signup',
         data: {'email': email},
       );
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('✅ ${response.data.toString()}')),
+        SnackBar(content: Text(response.data['message'] ?? '인증번호가 전송되었습니다.')),
       );
+
+
+      setState(() {
+        _codeVerified = false;
+        _emailVerifyError = null;
+      });
+      _startEmailTimer();
+
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ 이메일 전송 실패: ${e.toString()}')),
       );
     }
+
+  }
+
+  void _verifyEmailCode() async {
+    final email = _emailController.text.trim();
+    final code = _emailCodeController.text.trim();
+
+    if (email.isEmpty || code.isEmpty) {
+      setState(() {
+        _emailVerifyError = '이메일과 인증번호를 모두 입력해주세요.';
+      });
+      return;
+    }
+
+    try {
+      final response = await DioClient.dio.post(
+        '/auth/verify-code',
+        data: {
+          'email': email,
+          'code': code,
+        },
+      );
+
+      if (response.data['status'] == 'success') {
+        setState(() {
+          _emailVerifyError = null; // 성공 시 에러 메시지 제거
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.data['message'] ?? '인증 성공')),
+        );
+      } else {
+        setState(() {
+          _emailVerifyError = response.data['message'] ?? '인증번호가 일치하지 않습니다.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _emailVerifyError = '인증번호가 일치하지 않습니다';
+      });
+    }
+
   }
     void _verifyEmailCode() async {
       final email = _emailController.text.trim();
@@ -373,9 +425,50 @@ class _SignupPageState extends State<SignupPage> {
     _emailController.dispose();
     _emailCodeController.dispose();
     _debounce?.cancel();
+    _emailTimer?.cancel();
     super.dispose();
   }
+  Timer? _emailTimer;
+  int _timeLeft = 180; // 3분
+  bool _codeVerified = false;
 
+  void _startEmailTimer() {
+    _emailTimer?.cancel();
+    setState(() {
+      _timeLeft = 180;
+    });
+    _emailTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_timeLeft <= 0) {
+        timer.cancel();
+        setState(() {
+          _emailVerifyError = '인증 시간이 초과되었습니다.';
+        });
+      } else {
+        setState(() {
+          _timeLeft--;
+        });
+      }
+    });
+  }
+
+  String _formatTimeLeft() {
+    final minutes = _timeLeft ~/ 60;
+    final seconds = _timeLeft % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+  Widget _buildTimerText() {
+    if (_codeVerified || _timeLeft <= 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          '남은 시간: ${_formatTimeLeft()}',
+          style: const TextStyle(color: Colors.blue),
+        ),
+      ),
+    );
+  }
   Widget _buildStatusText(bool condition, String successText, String failText) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -422,6 +515,7 @@ class _SignupPageState extends State<SignupPage> {
                       child: Text(
                         '사용 가능한 아이디입니다.',
                         style: const TextStyle(color: Colors.green),
+
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -526,11 +620,12 @@ class _SignupPageState extends State<SignupPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         ),
                         child: const Text(
-                          '발송',
+                          '인증번호 받기',
                           style: TextStyle(color: Colors.black),
                         ),
                       ),
                       const SizedBox(width: 8),
+
 
                       // ✅ 인증번호 확인 버튼
                       ElevatedButton(
@@ -549,22 +644,23 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     ],
                   ),
-                  if (emailVerified)
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '이메일 인증이 완료되었습니다.',
-                        style: TextStyle(color: Colors.green),
-                      ),
-                    ),
+
+                  // ✅ 인증 실패 메시지 출력 (Row 바깥)
                   if (_emailVerifyError != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _emailVerifyError!,
-                        style: const TextStyle(color: Colors.red),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _emailVerifyError!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       ),
                     ),
+
+                  _buildTimerText(),
+
+
                   // 개인정보 동의
                   Row(
                     children: [
