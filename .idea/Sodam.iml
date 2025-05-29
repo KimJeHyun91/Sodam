@@ -3,9 +3,18 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/Front/sodam/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/Front/sodam/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/Front/sodam/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Front/sodam/linux/flutter/ephemeral/.plugin_symlinks/flutter_blue_plus_linux/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Front/sodam/linux/flutter/ephemeral/.plugin_symlinks/flutter_blue_plus_linux/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Front/sodam/linux/flutter/ephemeral/.plugin_symlinks/flutter_blue_plus_linux/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Front/sodam/macos/Flutter/ephemeral/.symlinks/plugins/flutter_blue_plus_darwin/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Front/sodam/macos/Flutter/ephemeral/.symlinks/plugins/flutter_blue_plus_darwin/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Front/sodam/macos/Flutter/ephemeral/.symlinks/plugins/flutter_blue_plus_darwin/build" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

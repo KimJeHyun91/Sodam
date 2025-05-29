@@ -32,13 +32,6 @@ class _LoginPageState extends State<LoginPage> {
     final pw = _pwController.text;
 
     try {
-      // final response = await DioClient.dio.get(
-      //   '/member/login',
-      //   queryParameters: {
-      //     'id': id,
-      //     'password': pw,
-      //   },
-      // );
       final response = await DioClient.dio.post(
         '/member/login',
         data: {
@@ -46,11 +39,14 @@ class _LoginPageState extends State<LoginPage> {
           'password': pw,
         },
       );
-      print("로그인 응답: ${response.data}");
+
+      print('로그인 응답: ${response.data}');
+
+      final data = response.data;
 
       if (response.data['message_no'] == 1020) {
-        // 로그인 아이디 저장 -> 추가
         final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', response.data['token']);
         await prefs.setString('loggedInId', id);
 
         await prefs.setString('jwtToken', response.data['token']);
@@ -60,6 +56,7 @@ class _LoginPageState extends State<LoginPage> {
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),
               (route) => false, // 이전 스택 다 제거
+
         );
       } else {
         setState(() {

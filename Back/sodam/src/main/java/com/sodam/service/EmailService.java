@@ -21,7 +21,6 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    // 이메일: 인증코드 + 만료시간 저장
     private final Map<String, AuthCodeEntry> authCodeStore = new ConcurrentHashMap<>();
     private static final long EXPIRE_TIME = 3 * 60 * 1000; // 3분
 
@@ -65,5 +64,18 @@ public class EmailService {
             return false;
         }
         return entry.code.equals(inputCode);
+
     }
+    public boolean codeExists(String email) {
+        AuthCodeEntry entry = authCodeStore.get(email);
+        return entry != null && System.currentTimeMillis() <= entry.expiresAt;
+    }
+
+    public boolean isCodeCorrect(String email, String inputCode) {
+        AuthCodeEntry entry = authCodeStore.get(email);
+        if (entry == null) return false;
+        return entry.code.equals(inputCode);
+
+    }
+
 }
