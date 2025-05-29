@@ -4,6 +4,7 @@ import 'login_page.dart';
 import '../dio_client.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -33,6 +34,7 @@ class _SignupPageState extends State<SignupPage> {
   bool nicknameInUse = false;
   bool emailInUse = false;
   bool _isFormatting = false;
+  bool emailVerified = false;
 
   bool idTouched = false;
   bool passwordTouched = false;
@@ -252,6 +254,7 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       final response = await DioClient.dio.post(
+
         '/auth/send-code-signup',
         data: {'email': email},
       );
@@ -267,11 +270,13 @@ class _SignupPageState extends State<SignupPage> {
       });
       _startEmailTimer();
 
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ 이메일 전송 실패: ${e.toString()}')),
       );
     }
+
   }
 
   void _verifyEmailCode() async {
@@ -311,14 +316,55 @@ class _SignupPageState extends State<SignupPage> {
         _emailVerifyError = '인증번호가 일치하지 않습니다';
       });
     }
+
   }
+    void _verifyEmailCode() async {
+      final email = _emailController.text.trim();
+      final code = _emailCodeController.text.trim();
+
+      if (email.isEmpty || code.isEmpty) {
+        setState(() {
+          emailVerified = false;
+          _emailVerifyError = '이메일과 인증번호를 모두 입력해주세요.';
+        });
+        return;
+      }
+
+      try {
+        final response = await DioClient.dio.post(
+          '/auth/verify-code',
+          data: {
+            'email': email,
+            'code': code,
+          },
+        );
+
+        if (response.data == '인증 성공') {
+          setState(() {
+            emailVerified = true;
+            _emailVerifyError = null;
+          });
+        } else {
+          setState(() {
+            emailVerified = false;
+            _emailVerifyError = '인증번호가 올바르지 않습니다.';
+          });
+        }
+      } catch (e) {
+        setState(() {
+          emailVerified = false;
+          _emailVerifyError = '서버 오류로 인증에 실패했습니다.';
+        });
+      }
+    }
+
 
   bool canSubmit() {
     return idValid && idChecked && idAvailable &&
         passwordTouched && passwordValid && passwordConfirmed &&
         _nameError == null && _nicknameError == null && !nicknameInUse &&
         _birthError == null &&
-        _emailController.text.trim().isNotEmpty && !emailInUse &&
+        _emailController.text.trim().isNotEmpty && !emailInUse && emailVerified &&
         agree;
   }
 
@@ -353,6 +399,9 @@ class _SignupPageState extends State<SignupPage> {
         },
       );
       if (context.mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('loggedInId', _idController.text);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('회원가입 성공')),
         );
@@ -436,6 +485,7 @@ class _SignupPageState extends State<SignupPage> {
   String? _nicknameError;
   String? _birthError;
   String? _emailVerifyError;
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -465,6 +515,7 @@ class _SignupPageState extends State<SignupPage> {
                       child: Text(
                         '사용 가능한 아이디입니다.',
                         style: const TextStyle(color: Colors.green),
+
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -608,6 +659,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
 
                   _buildTimerText(),
+
 
                   // 개인정보 동의
                   Row(

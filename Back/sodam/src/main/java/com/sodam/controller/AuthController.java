@@ -1,5 +1,6 @@
 package com.sodam.controller;
 
+
 import com.sodam.domain.MemberDomain;
 import com.sodam.service.EmailService;
 import com.sodam.service.MemberService;
@@ -11,12 +12,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final EmailService emailService;
+
     private final MemberService memberService;
     private final PasswordEncoder passwordEncoder;
 
@@ -75,10 +78,12 @@ public class AuthController {
     }
 
     
+
     @PostMapping("/verify-code")
     public ResponseEntity<?> verifyCode(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String code = request.get("code");
+
 
         if (email == null || code == null) {
             return ResponseEntity.badRequest().body(
@@ -132,5 +137,6 @@ public class AuthController {
         MemberDomain updated = memberService.update(member);
 
         return ResponseEntity.ok(updated != null ? 1050 : 1051); 
+
     }
 }

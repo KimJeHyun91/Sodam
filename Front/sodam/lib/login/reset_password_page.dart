@@ -229,7 +229,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       appBar: AppBar(title: const Text('비밀번호 찾기')),
       body: Padding(
         padding: const EdgeInsets.all(30),
@@ -326,6 +328,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sodam/main_page.dart';
 import 'find_id_page.dart';
 import 'reset_password_page.dart';
@@ -31,18 +32,26 @@ class _LoginPageState extends State<LoginPage> {
     final pw = _pwController.text;
 
     try {
-      final response = await DioClient.dio.get(
+      final response = await DioClient.dio.post(
         '/member/login',
-        queryParameters: {
+        data: {
           'id': id,
           'password': pw,
         },
       );
+      print('로그인 응답: ${response.data}');
 
-      if (response.data == 1020) {
-        Navigator.pushReplacement(
+      final data = response.data;
+
+      if (response.data['message_no'] == 1020) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', response.data['token']);
+        await prefs.setString('loggedInId', id);
+
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),
+              (route) => false,
         );
       } else {
         setState(() {
@@ -58,7 +67,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -189,6 +200,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    ),
     );
   }
 }

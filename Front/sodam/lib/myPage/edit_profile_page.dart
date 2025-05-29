@@ -1,4 +1,3 @@
-// import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,8 +16,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController nicknameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController birthdayController = TextEditingController();
 
   bool isLoading = true;
+  bool isFormValid = false;
+
+  String? originalNickname;
+  String? originalPassword;
+  String? originalEmail;
+  String? originalName;
+  String? originalBirthday;
 
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -26,12 +35,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    loadUserNickname();
+    loadUserInfo();
+
+    nicknameController.addListener(_validateForm);
+    passwordController.addListener(_validateForm);
+    confirmPasswordController.addListener(_validateForm);
+    emailController.addListener(_validateForm);
+    nameController.addListener(_validateForm);
+    birthdayController.addListener(_validateForm);
   }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
     if (image != null) {
       setState(() {
         _selectedImage = File(image.path);
@@ -57,20 +72,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _pickImage();
                 },
               ),
-              // ListTile(
-              //   leading: const Icon(Icons.folder),
-              //   title: const Text('파일에서 선택'),
-              //   onTap: () async {
-              //     Navigator.pop(context);
-              //     final result = await FilePicker.platform.pickFiles(type: FileType.image);
-              //     if (result != null && result.files.single.path != null) {
-              //       final file = File(result.files.single.path!);
-              //       setState(() {
-              //         _selectedImage = file;
-              //       });
-              //     }
-              //   },
-              // ),
               ListTile(
                 leading: const Icon(Icons.close),
                 title: const Text('취소'),
@@ -83,7 +84,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Future<void> loadUserNickname() async {
+  void _validateForm() {
+    final nickname = nicknameController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+    final email = emailController.text.trim();
+    final name = nameController.text.trim();
+    final birthday = birthdayController.text.trim();
+
+    final nicknameChanged = originalNickname != null && nickname != originalNickname;
+    final emailChanged = originalEmail != null && email != originalEmail;
+    final nameChanged = originalName != null && name != originalName;
+    final birthdayChanged = originalBirthday != null && birthday != originalBirthday;
+
+    final passwordFilled = password.isNotEmpty && confirmPassword.isNotEmpty;
+    final passwordMatch = password == confirmPassword;
+    final passwordChanged = password != originalPassword;
+    final passwordValid = passwordFilled && passwordMatch && passwordChanged;
+
+    final valid = nicknameChanged || emailChanged || nameChanged || birthdayChanged || passwordValid;
+
+    if (valid != isFormValid) {
+      setState(() {
+        isFormValid = valid;
+      });
+    }
+  }
+
+  Future<void> loadUserInfo() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getString('loggedInId');
@@ -100,16 +128,82 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (response.data is Map<String, dynamic>) {
-        nicknameController.text = response.data['nickname'] ?? '';
-      } else {
-        nicknameController.text = '정보 없음';
+        final data = response.data;
+        nicknameController.text = data['nickname'] ?? '';
+        originalNickname = nicknameController.text;
+        passwordController.clear();
+        confirmPasswordController.clear();
+        originalPassword = data['password'] ?? '';
+        emailController.text = data['email'] ?? '';
+        originalEmail = emailController.text;
+        nameController.text = data['name'] ?? '';
+        originalName = nameController.text;
+        birthdayController.text = data['birthday'] ?? '';
+        originalBirthday = birthdayController.text;
       }
 
       setState(() => isLoading = false);
     } catch (e) {
-      print("닉네임 로딩 실패: $e");
+      print("회원 정보 로딩 실패: $e");
       nicknameController.text = '에러';
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _handleSubmit() async {
+    final nickname = nicknameController.text.trim();
+    final password = passwordController.text.trim();
+    final email = emailController.text.trim();
+    final name = nameController.text.trim();
+    final birthday = birthdayController.text.trim();
+
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString('loggedInId');
+
+    if (id == null) return;
+
+    final data = {"id": id};
+    if (nickname != originalNickname) data["nickname"] = nickname;
+    if (password.isNotEmpty && password == confirmPasswordController.text && password != originalPassword) {
+      data["password"] = password;
+    }
+    if (email != originalEmail) data["email"] = email;
+    if (name != originalName) data["name"] = name;
+    if (birthday != originalBirthday) data["birthday"] = birthday;
+
+    try {
+      final response = await dio.put(
+        'http://10.0.2.2:8080/member/update',
+        data: data,
+      );
+
+      if (response.data == 1030) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("수정 완료"),
+            content: const Text("회원 정보가 성공적으로 수정되었습니다."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
+                },
+                child: const Text("확인"),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("수정에 실패했습니다")),
+        );
+      }
+    } catch (e) {
+      print("수정 실패: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("서버 요청 중 오류 발생")),
+      );
     }
   }
 
@@ -138,10 +232,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // const CircleAvatar(
-              //   radius: 100,
-              //   backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
-              // ),
               Stack(
                 children: [
                   CircleAvatar(
@@ -161,36 +251,36 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.camera_alt, size: 24),
-                        onPressed: _showPhotoOptions, // ✅ Bottom sheet 띄우기
+                        onPressed: _showPhotoOptions,
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-
-              // 별칭 입력
               _labelText("별칭"),
               _textField(controller: nicknameController),
-
               const SizedBox(height: 16),
-
-              // 비밀번호
               _labelText("비밀번호"),
               _textField(controller: passwordController, obscure: true),
-
               const SizedBox(height: 16),
-
-              // 비밀번호 확인
               _labelText("비밀번호 확인"),
               _textField(controller: confirmPasswordController, obscure: true),
-
               const SizedBox(height: 24),
-
+              _labelText("이메일"),
+              _textField(controller: emailController),
+              const SizedBox(height: 16),
+              _labelText("이름"),
+              _textField(controller: nameController),
+              const SizedBox(height: 16),
+              _labelText("생일 (YYYY-MM-DD)"),
+              _textField(controller: birthdayController),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
+                    onPressed: isFormValid ? _handleSubmit : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[200],
                       foregroundColor: Colors.black,
@@ -199,74 +289,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-            onPressed: () async {
-              final nickname = nicknameController.text.trim();
-              final password = passwordController.text.trim();
-              final confirmPassword = confirmPasswordController.text.trim();
-
-              if (password != confirmPassword) {
-                // 비밀번호 불일치
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text("오류"),
-                    content: const Text("비밀번호 확인이 일치하지 않습니다"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("확인"),
-                      ),
-                    ],
-                  ),
-                );
-                return;
-              }
-
-              final prefs = await SharedPreferences.getInstance();
-              final id = prefs.getString('loggedInId');
-
-              if (id == null) return;
-
-              try {
-                final response = await dio.put(
-                  'http://10.0.2.2:8080/member/update',
-                  data: {
-                    "id": id,
-                    "nickname": nickname,
-                    "password": password,
-                  },
-                );
-
-                if (response.data == 1030) {
-                  // 성공
-                  if (context.mounted) {
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("성공"),
-                        content: const Text("회원 정보가 수정되었습니다"),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("확인"),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                } else {
-                  // 실패
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("수정에 실패했습니다")),
-                  );
-                }
-              } catch (e) {
-                print("수정 실패: $e");
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("서버 요청 중 오류 발생")),
-                );
-              }
-            },
                     child: const Text("수정"),
                   ),
                   const SizedBox(width: 16),
@@ -276,13 +298,62 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       foregroundColor: Colors.red,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
-                    onPressed: () {
-                      // 탈퇴 처리 예정
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text("회원 탈퇴"),
+                          content: const Text("정말 탈퇴하시겠습니까? 모든 데이터가 삭제됩니다."),
+                          actions: [
+                            TextButton(
+                              child: const Text("취소"),
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                            TextButton(
+                              child: const Text("확인"),
+                              onPressed: () => Navigator.pop(context, true),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed != true) return;
+
+                      final prefs = await SharedPreferences.getInstance();
+                      final id = prefs.getString('loggedInId');
+
+                      if (id == null) return;
+
+                      try {
+                        final response = await Dio().delete(
+                          'http://10.0.2.2:8080/member/delete',
+                          queryParameters: {'id': id},
+                        );
+
+                        if (response.data == 111111) {
+                          await prefs.remove('loggedInId');
+                          if (!context.mounted) return;
+                          Navigator.of(context).popUntil((route) => route.isFirst); // 홈으로 이동
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("회원 탈퇴가 완료되었습니다.")),
+                          );
+                        } else {
+                          print("탈퇴 실패 코드: ${response.data}");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("탈퇴에 실패했습니다.")),
+                          );
+                        }
+                      } catch (e) {
+                        print("탈퇴 실패: $e");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("서버 오류로 탈퇴에 실패했습니다.")),
+                        );
+                      }
                     },
                     child: const Text("회원탈퇴"),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),

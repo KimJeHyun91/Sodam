@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../components/bottom_nav.dart';
+import 'ttagji/ttagji_game_page.dart'; // 딱지치기
+import 'biseok/biseok_game_page.dart'; // 비석치기
+import 'paeng-i/spinner_selection_page.dart'; // 팽이 선택 페이지
 
 class SelectUserPage extends StatefulWidget {
-  final String gameTitle; // 예: '딱지치기', '산가지', '남승도'
+  final String gameTitle; // 예: '딱지치기', '산가지', '남승도', '팽이치기'
 
   const SelectUserPage({super.key, required this.gameTitle});
 
@@ -104,7 +107,22 @@ class _SelectUserPageState extends State<SelectUserPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // 게임 시작 로직 혹은 다음 페이지로 이동
+                  if (widget.gameTitle == '딱지치기') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TtagjiGamePage()),
+                    );
+                  } else if (widget.gameTitle == '비석치기') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const BiseokGamePage()),
+                    );
+                  } else if (widget.gameTitle == '팽이치기') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SpinnerSelectionPage()),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFC9DAB2),
