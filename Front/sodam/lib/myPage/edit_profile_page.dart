@@ -348,6 +348,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool isFormValid = false;
   String? nicknameError;
   String? passwordError;
+  String? confirmPasswordError;
   String? birthdayError;
   String? nameError;
   String? emailError;
@@ -374,6 +375,38 @@ class _EditProfilePageState extends State<EditProfilePage> {
     birthdayController.addListener(_validateForm);
   }
 
+  // void _validateForm() {
+  //   final nickname = nicknameController.text.trim();
+  //   final password = passwordController.text.trim();
+  //   final confirmPassword = confirmPasswordController.text.trim();
+  //   final email = emailController.text.trim();
+  //   final name = nameController.text.trim();
+  //   final birthday = birthdayController.text.trim();
+  //
+  //   final nicknameReg = RegExp(r'^(?:[가-힣]{2,8}\d{0,4}|\d{1,4})\$');
+  //   final passwordReg = RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{8,16}\$');
+  //   final nameReg = RegExp(r'^[가-힣]{2,10}\$');
+  //
+  //   nicknameError = nicknameReg.hasMatch(nickname) ? null : '형식 오류: 한글 2~8자 + 숫자 0~4자';
+  //   passwordError = passwordReg.hasMatch(password) ? null : '비밀번호 조건 불충족';
+  //   birthdayError = birthday.length == 10 && birthday.contains('-') ? null : 'YYYY-MM-DD 형식 필요';
+  //   nameError = nameReg.hasMatch(name) ? null : '이름은 한글 2~10자';
+  //   emailError = email.contains('@') && email.contains('.') ? null : '이메일 형식 오류';
+  //
+  //   final changed = (originalNickname != null && nickname != originalNickname) ||
+  //       (originalEmail != null && email != originalEmail) ||
+  //       (originalName != null && name != originalName) ||
+  //       (originalBirthday != null && birthday != originalBirthday) ||
+  //       (password.isNotEmpty && password == confirmPassword && password != originalPassword);
+  //
+  //   final valid = [nicknameError, passwordError, birthdayError, nameError, emailError].every((e) => e == null) && changed;
+  //
+  //   if (valid != isFormValid) {
+  //     setState(() {
+  //       isFormValid = valid;
+  //     });
+  //   }
+  // }
   void _validateForm() {
     final nickname = nicknameController.text.trim();
     final password = passwordController.text.trim();
@@ -382,28 +415,61 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final name = nameController.text.trim();
     final birthday = birthdayController.text.trim();
 
-    final nicknameReg = RegExp(r'^(?:[가-힣]{2,8}\d{0,4}|\d{1,4})\$');
-    final passwordReg = RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{8,16}\$');
-    final nameReg = RegExp(r'^[가-힣]{2,10}\$');
+    // 별칭 유효성 (한글 2~8자 + 숫자 0~4자리)
+    final nickValid = RegExp(r'^(?:[가-힣]{2,8}\d{0,4}|\d{1,4})$').hasMatch(nickname);
+    nicknameError = nickValid || nickname == originalNickname ? null : '별칭 형식이 올바르지 않습니다.';
 
-    nicknameError = nicknameReg.hasMatch(nickname) ? null : '형식 오류: 한글 2~8자 + 숫자 0~4자';
-    passwordError = passwordReg.hasMatch(password) ? null : '비밀번호 조건 불충족';
-    birthdayError = birthday.length == 10 && birthday.contains('-') ? null : 'YYYY-MM-DD 형식 필요';
-    nameError = nameReg.hasMatch(name) ? null : '이름은 한글 2~10자';
-    emailError = email.contains('@') && email.contains('.') ? null : '이메일 형식 오류';
+    // 비밀번호 유효성
+    final pwValid = RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{8,16}$').hasMatch(password);
+    final pwSimilarToId = false; // ID 없음
+    passwordError = password.isEmpty
+        ? null
+        : !pwValid ? '비밀번호 형식이 잘못되었습니다.'
+        : pwSimilarToId ? '아이디와 비슷한 문자열이 포함됨'
+        : null;
 
-    final changed = (originalNickname != null && nickname != originalNickname) ||
-        (originalEmail != null && email != originalEmail) ||
-        (originalName != null && name != originalName) ||
-        (originalBirthday != null && birthday != originalBirthday) ||
-        (password.isNotEmpty && password == confirmPassword && password != originalPassword);
+    confirmPasswordError = password != confirmPassword ? '비밀번호가 일치하지 않습니다.' : null;
 
-    final valid = [nicknameError, passwordError, birthdayError, nameError, emailError].every((e) => e == null) && changed;
+    // 이메일 간단 유효성 (추가로 중복 체크 필요시 별도 처리)
+    emailError = email.contains('@') ? null : '유효한 이메일 형식이 아닙니다.';
 
-    if (valid != isFormValid) {
+    // 이름 유효성
+    nameError = RegExp(r'^[가-힣]{2,10}$').hasMatch(name) ? null : '이름은 한글 2~10자여야 합니다.';
+
+    // 생일 유효성
+    birthdayError = _validateBirthday(birthday);
+
+    final changed = (nickname != originalNickname) ||
+        (password.isNotEmpty && password == confirmPassword && password != originalPassword) ||
+        (email != originalEmail) ||
+        (name != originalName) ||
+        (birthday != originalBirthday);
+
+    final allValid = nicknameError == null &&
+        passwordError == null &&
+        confirmPasswordError == null &&
+        emailError == null &&
+        nameError == null &&
+        birthdayError == null;
+
+    final newIsFormValid = changed && allValid;
+
+    if (newIsFormValid != isFormValid) {
       setState(() {
-        isFormValid = valid;
+        isFormValid = newIsFormValid;
       });
+    }
+  }
+  String? _validateBirthday(String raw) {
+    if (raw.length != 10 || !raw.contains('-')) return 'YYYY-MM-DD 형식이어야 합니다.';
+    try {
+      final parsed = DateTime.parse(raw);
+      final now = DateTime.now();
+      final age = now.year - parsed.year - ((now.month < parsed.month || (now.month == parsed.month && now.day < parsed.day)) ? 1 : 0);
+      if (age < 0 || age > 120) return '나이 범위가 유효하지 않습니다.';
+      return null;
+    } catch (_) {
+      return '생년월일 형식이 잘못되었습니다.';
     }
   }
 
@@ -618,7 +684,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               _labelText("이름"),
               _textField(controller: nameController),
               const SizedBox(height: 16),
-              _labelText("생일 (YYYY-MM-DD)"),
+              _labelText("생일"),
               _textField(controller: birthdayController),
               const SizedBox(height: 16),
               Row(
