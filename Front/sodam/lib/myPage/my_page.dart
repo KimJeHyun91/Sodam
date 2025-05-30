@@ -66,12 +66,15 @@ class _MyPageState extends State<MyPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getString('loggedInId');
-      print('🧩 저장된 ID: "$id"');
+      final isGuest = prefs.get('isGuest') == true;
+      final guestNickname = prefs.getString('guest_nickname') ?? '비회원';
 
-      if (id == null || id.trim().isEmpty) {
-        print('⚠️ ID 없음 - 비회원 처리');
+      print('🧩 저장된 ID: "$id", isGuest: $isGuest');
+
+      if (isGuest || id == null || id.trim().isEmpty) {
+        print('⚠️ 비회원 처리');
         setState(() {
-          nickname = '비회원';
+          nickname = guestNickname;
           email = '로그인 필요';
           isLoading = false;
           _walletPoint = 0;
@@ -82,13 +85,7 @@ class _MyPageState extends State<MyPage> {
       await fetchAttendanceDates(id);
 
       final response = await DioClient.dio.get('/member/get_member_object', queryParameters: {'id': id});
-      // final pointResponse = await DioClient.dio.get('/point/get_info', queryParameters: {'id': id});
-      final pointResponse = await DioClient.dio.get(
-        '/point/get_info_id_object',
-        queryParameters: {'id': id},
-      );
-      print("👤 member response: ${response.data}");
-      print("💰 point response: ${pointResponse.data}");
+      final pointResponse = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
 
       final memberData = response.data;
       final pointData = pointResponse.data;
