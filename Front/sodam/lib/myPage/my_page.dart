@@ -15,16 +15,14 @@ class MyPage extends StatefulWidget {
   State<MyPage> createState() => _MyPageState();
 }
 
+String? selectedTitle;
+String? selectedIcon;
+
 class _MyPageState extends State<MyPage> {
   String nickname = '';
   String email = '';
   bool isLoading = true;
-
-  final Set<DateTime> _loginDates = {
-    DateTime(2025, 5, 1),
-    DateTime(2025, 5, 3),
-    DateTime(2025, 5, 6),
-  };
+  // String title = ''; // 칭호
 
   int _walletPoint = 0;
   Set<DateTime> _attendedDates = {};
@@ -99,6 +97,8 @@ class _MyPageState extends State<MyPage> {
         _walletPoint = (pointData is Map && pointData['current_point'] != null)
             ? pointData['current_point']
             : 0;
+        selectedTitle = prefs.getString('selectedTitle');
+        selectedIcon = prefs.getString('selectedIcon');
         isLoading = false;
       });
     } catch (e) {
@@ -153,7 +153,40 @@ class _MyPageState extends State<MyPage> {
                             backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
                           ),
                           const SizedBox(height: 20),
-                          Text(nickname, style: const TextStyle(fontSize: 36)),
+                          if (selectedTitle != null)
+                            Text(
+                              selectedTitle!,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                            ),
+                          const SizedBox(height: 2),
+                          // Text(nickname, style: const TextStyle(fontSize: 36)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (selectedIcon != null && selectedIcon!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Image.asset(
+                                    selectedIcon!,
+                                    width: 48,
+                                    height: 48,
+                                  ),
+                                ),
+                              Text(
+                                nickname,
+                                style: const TextStyle(fontSize: 36),
+                              ),
+                              if (selectedIcon != null && selectedIcon!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Image.asset(
+                                    selectedIcon!,
+                                    width: 48,
+                                    height: 48,
+                                  ),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 6),
                           Text(email, style: const TextStyle(fontSize: 20)),
                         ],
@@ -187,9 +220,9 @@ class _MyPageState extends State<MyPage> {
               const SizedBox(height: 12),
               _buildWallet(),
               const SizedBox(height: 12),
-              _buildCalendar(),
-              const SizedBox(height: 12),
               _buildMarketButtons(),
+              const SizedBox(height: 12),
+              _buildCalendar(),
             ],
           ),
         ),
@@ -306,7 +339,17 @@ class _MyPageState extends State<MyPage> {
         const SizedBox(width: 12),
         Expanded(
           child: GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionPage())),
+            // onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionPage())),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CollectionPage()),
+              ).then((result) {
+                if (result == true) {
+                  fetchData();
+                }
+              });
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               decoration: BoxDecoration(
