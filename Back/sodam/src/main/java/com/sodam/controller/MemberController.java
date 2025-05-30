@@ -62,7 +62,6 @@ public class MemberController {
     @Autowired private PasswordEncoder password_encoder;
     @Autowired private JwtUtil jwt_util; 
     @Autowired private UserImageService user_image_service;
-
 	
 	@Transactional
 	@PostMapping("/add")

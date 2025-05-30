@@ -713,6 +713,7 @@ class _SignupPageState extends State<SignupPage> {
   bool idTouched = false;
   bool passwordTouched = false;
   bool _birthTouched = false;
+  bool birthEntered = false;
 
   bool isPasswordTooSimilarToId(String id, String pw) {
     for (int i = 0; i <= id.length - 4; i++) {
@@ -843,6 +844,7 @@ class _SignupPageState extends State<SignupPage> {
     if (!_birthTouched && raw.isNotEmpty) {
       setState(() {
         _birthTouched = true;
+        birthEntered = true;
       });
     }
 
@@ -1006,27 +1008,19 @@ class _SignupPageState extends State<SignupPage> {
   bool canSubmit() {
     return idValid && idChecked && idAvailable &&
         passwordTouched && passwordValid && passwordConfirmed &&
-        _nameError == null && _nicknameError == null && !nicknameInUse &&
-        _birthError == null &&
+        _nameController.text.trim().isNotEmpty && _nameError == null &&
+        _nicknameController.text.trim().isNotEmpty && _nicknameError == null && !nicknameInUse &&
+        _birthController.text.trim().isNotEmpty && _birthError == null &&
         _emailController.text.trim().isNotEmpty && !emailInUse && emailVerified &&
         agree;
   }
 
   Future<void> _signup() async {
-    if (!agree) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('개인정보 수집에 동의해주세요.')),
-      );
-      return;
-    }
-    if (!idValid || !idChecked || !idAvailable ||
-        !passwordValid || !passwordConfirmed ||
-        _nameError != null || _nicknameError != null || nicknameInUse ||
-        _birthError != null || emailInUse ||
-        !agree) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('입력값을 다시 확인해주세요.')),
-      );
+    if (!canSubmit()) {
+      final msg = !agree
+          ? '개인정보 수집에 동의해주세요.'
+          : '입력값을 다시 확인해주세요.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       return;
     }
 
