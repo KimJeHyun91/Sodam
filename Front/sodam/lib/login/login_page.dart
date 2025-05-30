@@ -49,6 +49,9 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('token', response.data['token']);
         await prefs.setString('loggedInId', id);
 
+        await prefs.remove('isGuest');
+        await prefs.remove('guest_uuid');
+        await prefs.remove('guest_nickname');
         await prefs.setString('jwtToken', response.data['token']);
         print('✅ 저장된 JWT 토큰: ${prefs.getString('jwtToken')}');
 

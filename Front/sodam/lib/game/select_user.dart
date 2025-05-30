@@ -3,6 +3,7 @@ import '../components/bottom_nav.dart';
 import 'ttagji/ttagji_game_page.dart'; // 딱지치기
 import 'biseok/biseok_game_page.dart'; // 비석치기
 import 'paeng-i/spinner_selection_page.dart'; // 팽이 선택 페이지
+import 'rockpaperscissors/rock_paper_scissors_page.dart';
 
 class SelectUserPage extends StatefulWidget {
   final String gameTitle; // 예: '딱지치기', '산가지', '남승도', '팽이치기'
@@ -121,6 +122,16 @@ class _SelectUserPageState extends State<SelectUserPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const SpinnerSelectionPage()),
+                    );
+                  } else if (widget.gameTitle == '가위바위보') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RockPaperScissorsPage(
+                          myNickname: '나',
+                          opponentNickname: '길동이',
+                        ),
+                      ),
                     );
                   }
                 },
