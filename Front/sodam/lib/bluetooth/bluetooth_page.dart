@@ -15,6 +15,7 @@ class BluetoothPage extends StatefulWidget {
 class _BluetoothPageState extends State<BluetoothPage> {
   final FlutterBlePeripheral blePeripheral = FlutterBlePeripheral();
   List<BluetoothDevice> devices = [];
+  Set<BluetoothDevice> selectedDevices = {};
   bool isAdvertising = false;
 
   @override
@@ -55,7 +56,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
   void _startScanning() {
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
-
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
         if (!devices.any((d) => d.id == r.device.id)) {
@@ -67,28 +67,29 @@ class _BluetoothPageState extends State<BluetoothPage> {
     });
   }
 
-  Future<void> _connectToDevice(BluetoothDevice device) async {
+  Future<void> _startChat() async {
+    if (selectedDevices.isEmpty) return;
+
+    // 1명 선택 시: 1:1
+    if (selectedDevices.length == 1) {
+      BluetoothDevice device = selectedDevices.first;
+      await _connectToSingleDevice(device);
+    } else {
+      await _connectToGroupDevices();
+    }
+  }
+
+  Future<void> _connectToSingleDevice(BluetoothDevice device) async {
     try {
-      var connected = await device.state.first;
-      if (connected == BluetoothDeviceState.connected) return;
-
       await device.connect();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${device.name} 연결됨')),
-      );
-
       List<BluetoothService> services = await device.discoverServices();
       BluetoothCharacteristic? writeChar;
       BluetoothCharacteristic? notifyChar;
 
       for (var service in services) {
         for (var c in service.characteristics) {
-          if (c.properties.write && writeChar == null) {
-            writeChar = c;
-          }
-          if (c.properties.notify && notifyChar == null) {
-            notifyChar = c;
-          }
+          if (c.properties.write && writeChar == null) writeChar = c;
+          if (c.properties.notify && notifyChar == null) notifyChar = c;
         }
       }
 
@@ -98,20 +99,55 @@ class _BluetoothPageState extends State<BluetoothPage> {
           MaterialPageRoute(
             builder: (_) => ChatRoomPage(
               roomTitle: device.name.isEmpty ? 'BLE Chat' : device.name,
-              writeChar: writeChar,
-              notifyChar: notifyChar,
+              writeChars: [writeChar!],
+              notifyChars: [notifyChar!],
             ),
           ),
         );
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('사용 가능한 Characteristic을 찾을 수 없습니다.')),
         );
       }
     } catch (e) {
-      debugPrint("BLE 연결 오류: $e");
+      debugPrint("1:1 연결 실패: $e");
+    }
+  }
+
+  Future<void> _connectToGroupDevices() async {
+    List<BluetoothCharacteristic> writeChars = [];
+    List<BluetoothCharacteristic> notifyChars = [];
+
+    for (var device in selectedDevices) {
+      try {
+        await device.connect();
+        var services = await device.discoverServices();
+        for (var service in services) {
+          for (var c in service.characteristics) {
+            if (c.properties.write) writeChars.add(c);
+            if (c.properties.notify) notifyChars.add(c);
+          }
+        }
+      } catch (e) {
+        debugPrint("단톡 연결 실패: $e");
+      }
+    }
+
+    if (writeChars.isNotEmpty && notifyChars.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatRoomPage(
+            roomTitle: "단체 채팅방",
+            writeChars: writeChars,
+            notifyChars: notifyChars,
+          ),
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('연결 실패: $e')),
+        const SnackBar(content: Text("사용 가능한 Characteristic이 없습니다.")),
       );
     }
   }
@@ -137,22 +173,47 @@ class _BluetoothPageState extends State<BluetoothPage> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
-                setState(() => devices.clear());
+                setState(() {
+                  devices.clear();
+                  selectedDevices.clear();
+                });
                 _startScanning();
               },
               child: ListView.builder(
                 itemCount: devices.length,
                 itemBuilder: (context, index) {
                   final device = devices[index];
+                  final selected = selectedDevices.contains(device);
                   return ListTile(
                     title: Text(device.name.isEmpty ? '(No Name)' : device.name),
                     subtitle: Text(device.id.toString()),
-                    onTap: () => _connectToDevice(device),
+                    trailing: Checkbox(
+                      value: selected,
+                      onChanged: (value) {
+                        setState(() {
+                          if (value == true) {
+                            selectedDevices.add(device);
+                          } else {
+                            selectedDevices.remove(device);
+                          }
+                        });
+                      },
+                    ),
                   );
                 },
               ),
             ),
           ),
+          if (selectedDevices.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: _startChat,
+                child: Text(
+                  selectedDevices.length == 1 ? "1:1 채팅 시작" : "단톡방 만들기",
+                ),
+              ),
+            ),
         ],
       ),
     );

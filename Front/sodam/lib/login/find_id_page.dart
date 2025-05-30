@@ -137,7 +137,13 @@ class _FindIdPageState extends State<FindIdPage> {
         message = res['message'] ?? message;
       }
       setState(() {
-        _codeError = message.contains('인증번호') ? '인증번호가 일치하지 않습니다.' : message;
+        if (message.contains('만료')) {
+          _codeError = '인증번호가 만료되었습니다.';
+        } else if (message.contains('일치')) {
+          _codeError = '인증번호가 일치하지 않습니다.';
+        } else {
+          _codeError = message;
+        }
         _verified = false;
         _idResult = null;
       });
@@ -155,105 +161,105 @@ class _FindIdPageState extends State<FindIdPage> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-        data: ThemeData.light().copyWith(brightness: Brightness.light),
-    child: Scaffold(
-      appBar: AppBar(title: const Text('접속이름 찾기')),
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8F8F8),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('손글주소'),
-                  TextField(controller: _emailController),
-                  if (_emailError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(_emailError!, style: const TextStyle(color: Colors.red)),
-                    ),
-                  const SizedBox(height: 8),
+      data: ThemeData.light().copyWith(brightness: Brightness.light),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('접속이름 찾기')),
+        body: Padding(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8F8),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('손글주소'),
+                    TextField(controller: _emailController),
+                    if (_emailError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(_emailError!, style: const TextStyle(color: Colors.red)),
+                      ),
+                    const SizedBox(height: 8),
 
-                  const Text('인증번호'),
-                  Row(
-                    children: [
-                      Expanded(child: TextField(controller: _codeController)),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: _sendVerificationCode,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC9DAB2),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    const Text('인증번호'),
+                    Row(
+                      children: [
+                        Expanded(child: TextField(controller: _codeController)),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _sendVerificationCode,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC9DAB2),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          ),
+                          child: const Text('인증번호 받기'),
                         ),
-                        child: const Text('인증번호 받기'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: _verifyAndFindId,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFCCE5FF),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _verifyAndFindId,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFCCE5FF),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          ),
+                          child: const Text('확인'),
                         ),
-                        child: const Text('확인'),
-                      ),
-                    ],
-                  ),
-                  _buildTimerText(),
-                  if (_codeError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(_codeError!, style: const TextStyle(color: Colors.red)),
+                      ],
                     ),
-                  const SizedBox(height: 20),
-
-                  if (_verified && _idResult != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.black12),
-                        borderRadius: BorderRadius.circular(8),
+                    _buildTimerText(),
+                    if (_codeError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(_codeError!, style: const TextStyle(color: Colors.red)),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('가입된 접속이름'),
-                          Text(_idResult!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        ],
+                    const SizedBox(height: 20),
+
+                    if (_verified && _idResult != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('가입된 접속이름'),
+                            Text(_idResult!, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                      (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC9DAB2),
-                minimumSize: const Size.fromHeight(50),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                        (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC9DAB2),
+                  minimumSize: const Size.fromHeight(50),
+                ),
+                child: const Text('로그인 화면으로'),
               ),
-              child: const Text('로그인 화면으로'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

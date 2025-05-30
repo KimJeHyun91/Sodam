@@ -318,45 +318,7 @@ class _SignupPageState extends State<SignupPage> {
     }
 
   }
-    void _verifyEmailCode() async {
-      final email = _emailController.text.trim();
-      final code = _emailCodeController.text.trim();
 
-      if (email.isEmpty || code.isEmpty) {
-        setState(() {
-          emailVerified = false;
-          _emailVerifyError = '이메일과 인증번호를 모두 입력해주세요.';
-        });
-        return;
-      }
-
-      try {
-        final response = await DioClient.dio.post(
-          '/auth/verify-code',
-          data: {
-            'email': email,
-            'code': code,
-          },
-        );
-
-        if (response.data == '인증 성공') {
-          setState(() {
-            emailVerified = true;
-            _emailVerifyError = null;
-          });
-        } else {
-          setState(() {
-            emailVerified = false;
-            _emailVerifyError = '인증번호가 올바르지 않습니다.';
-          });
-        }
-      } catch (e) {
-        setState(() {
-          emailVerified = false;
-          _emailVerifyError = '서버 오류로 인증에 실패했습니다.';
-        });
-      }
-    }
 
 
   bool canSubmit() {

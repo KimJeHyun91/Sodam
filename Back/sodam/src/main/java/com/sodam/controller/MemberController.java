@@ -50,20 +50,18 @@ import jakarta.transaction.Transactional;
 @RestController
 @RequestMapping("/member")
 public class MemberController {
-	@Autowired
-	MemberService member_service;
-	@Autowired
-	PointService point_service;
-	@Autowired
-	PointHistoryService point_history_service;
-	@Autowired
-	BluetoothConnectedDeviceService bluetooth_connected_device_service;
-	@Autowired
-	BlockedDeviceService blocked_device_service;
-	@Autowired
-	UserRewardItemService user_reward_item_service;
-	@Autowired
-	private EmailService emailService;
+	@Autowired private MemberService member_service;
+    @Autowired private PointService point_service;
+    @Autowired private PointHistoryService point_history_service;
+    @Autowired private BluetoothConnectedDeviceService bluetooth_connected_device_service;
+    @Autowired private BlockedDeviceService blocked_device_service;
+    @Autowired private UserRewardItemService user_reward_item_service;
+    @Autowired private EmailService emailService;
+    @Autowired private UserDetailsServiceImplement user_details_service_implement;
+    @Autowired private AuthenticationManager authentication_manager;
+    @Autowired private PasswordEncoder password_encoder;
+    @Autowired private JwtUtil jwt_util; 
+    @Autowired private UserImageService user_image_service;
 
 
 	
@@ -430,6 +428,22 @@ public class MemberController {
 			return 1090;
 		}
 		return 1091;
+	}
+	@GetMapping("/find-id")
+	public ResponseEntity<?> findIdByEmail(@RequestParam("email") String email) {
+	    if (email == null || email.isBlank()) {
+	        return ResponseEntity.badRequest().body(Map.of("status", "fail", "message", "이메일을 입력해주세요."));
+	    }
+
+	    Optional<MemberDomain> memberOpt = member_service.email_check(email);
+	    if (memberOpt.isEmpty()) {
+	        return ResponseEntity.status(404).body(Map.of("status", "fail", "message", "사용자를 찾을 수 없습니다."));
+	    }
+
+	    return ResponseEntity.ok(Map.of(
+	        "status", "success",
+	        "id", memberOpt.get().getId()
+	    ));
 	}
 
 
