@@ -164,7 +164,6 @@ public class MemberController {
 		String nickname=member_optional.map(MemberDomain::getNickname).orElse(null);
 		
 		final String jwt=jwt_util.generateToken(user_details.getUsername());
-		
 		return ResponseEntity.ok(new LoginResponseDto(jwt, 1020, user_details.getUsername(), nickname));
 	}
 	
@@ -319,7 +318,7 @@ public class MemberController {
 	}
 	
 	@PostMapping("/add_image/{id}")
-	public int add_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
+	public int add_image(@PathVariable("id") String id, @RequestParam("image") MultipartFile image) {
 		if(		
 				id==null||
 				id.equals("")||
