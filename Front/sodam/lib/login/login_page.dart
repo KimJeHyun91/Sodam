@@ -39,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
           'password': pw,
         },
       );
+
       print('로그인 응답: ${response.data}');
 
       final data = response.data;
@@ -51,11 +52,14 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.remove('isGuest');
         await prefs.remove('guest_uuid');
         await prefs.remove('guest_nickname');
+        await prefs.setString('jwtToken', response.data['token']);
+        print('✅ 저장된 JWT 토큰: ${prefs.getString('jwtToken')}');
 
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),
-              (route) => false,
+              (route) => false, // 이전 스택 다 제거
+
         );
       } else {
         setState(() {

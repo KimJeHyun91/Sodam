@@ -64,6 +64,16 @@ public class MemberController {
 	UserRewardItemService user_reward_item_service;
 	@Autowired
 	private EmailService emailService;
+	@Autowired
+	PasswordEncoder password_encoder;
+	@Autowired
+	AuthenticationManager authentication_manager;
+	@Autowired
+	UserDetailsServiceImplement user_details_service_implement;
+	@Autowired
+	JwtUtil jwt_util;
+	@Autowired
+	UserImageService user_image_service;
 
 
 	
