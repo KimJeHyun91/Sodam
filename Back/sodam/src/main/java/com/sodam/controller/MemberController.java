@@ -343,7 +343,7 @@ public class MemberController {
 
 
 	@PostMapping("/add_image/{id}")
-	public int add_image(@PathVariable("id") String id, @RequestParam("image") MultipartFile image) {
+	public int add_image(@PathVariable("id") String id, @RequestParam("image") MultipartFile image) throws IOException {
 		if(		
 				id==null||
 				id.equals("")||
@@ -352,7 +352,7 @@ public class MemberController {
 		) {
 			return 1900;
 		}
-		System.out.println("ddddddd");
+		System.out.println("dddddddddddddddddddd"+image.getBytes());
 		UserImageDomain user_image_domain=new UserImageDomain();
 		user_image_domain.setId(id);
 		try {
