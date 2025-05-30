@@ -24,6 +24,8 @@ import com.sodam.service.PointChangeReasonService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
 
+import jakarta.transaction.Transactional;
+
 @RestController
 @RequestMapping("/point")
 public class PointController {

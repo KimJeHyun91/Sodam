@@ -1,0 +1,151 @@
+@charset "EUC-KR";
+#member_add_div{
+	position: absolute;
+	left: 300px;
+	top: 100px;
+	width: 670px;
+	height: 500px;
+	border: 1px solid;
+	background-color: white;
+}
+#member_add_div div{
+	width: 650px; 
+	padding: 1%;
+}
+#member_add_div label{
+	margin-left: 2%;
+}
+
+/*접속이름*/
+#input_id{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_id_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_id:focus{
+	outline: transparent;
+}
+
+/*비밀번호*/
+#input_password{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_password_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_password:focus{
+	outline: transparent;
+}
+
+/*비밀번호 확인*/
+#input_password_verification{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_password_verification_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_password_verification:focus{
+	outline: transparent;
+}
+
+/*손글주소*/
+#input_email{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_email_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_email:focus{
+	outline: transparent;
+}
+#input_email_verification_code{
+	margin-left: 364px;
+	border: none;
+	border-bottom: 1px solid;
+}
+#input_email_verification_code:focus{
+	outline: transparent;
+}
+
+/*별칭*/
+#input_nickname{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_nickname_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_nickname:focus{
+	outline: transparent;
+}
+
+/*이름*/
+#input_name{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_name_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_name:focus{
+	outline: transparent;
+}
+
+/*생일*/
+#input_birthday{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_birthday_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_birthday:focus{
+	outline: transparent;
+}
+
+/*인가*/
+#input_authorization{
+	border: none; 
+	border-bottom: 1px solid; 
+	width: 400px; 
+	margin-left: 10px;
+}
+#input_authorization_label{
+	display: inline-block;
+	width: 100px;
+}
+#input_authorization:focus{
+	outline: transparent;
+}
+
+/*이웃 추가 버튼*/
+#member_add_button{
+	margin-top: 20px;
+	margin-left:300px;
+}
