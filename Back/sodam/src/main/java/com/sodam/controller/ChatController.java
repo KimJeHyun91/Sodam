@@ -100,4 +100,14 @@ public class ChatController {
             return ResponseEntity.ok(1471);
         }
     }
+    @DeleteMapping("/block")
+    public ResponseEntity<Integer> unblockUser(@RequestParam String blockerId, @RequestParam String blockedUserId) {
+        try {
+            chatService.unblockUser(blockerId, blockedUserId);
+            return ResponseEntity.ok(1432); // 성공
+        } catch (Exception e) {
+            return ResponseEntity.ok(1433); // 실패
+        }
+    }
+    
 }

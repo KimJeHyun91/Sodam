@@ -1,9 +1,11 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_ble_peripheral/flutter_ble_peripheral.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../chat/chat_room_page.dart';
-import 'dart:typed_data';
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({super.key});
@@ -17,6 +19,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
   List<BluetoothDevice> devices = [];
   Set<BluetoothDevice> selectedDevices = {};
   bool isAdvertising = false;
+  StreamSubscription<List<ScanResult>>? _scanSubscription;
 
   @override
   void initState() {
@@ -25,12 +28,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
   }
 
   Future<void> _startBluetoothFlow() async {
-    await _requestPermissions();
-    _startAdvertising();
-    _startScanning();
-  }
-
-  Future<void> _requestPermissions() async {
     await [
       Permission.bluetooth,
       Permission.bluetoothConnect,
@@ -40,11 +37,25 @@ class _BluetoothPageState extends State<BluetoothPage> {
     ].request();
   }
 
-  void _startAdvertising() async {
+  Future<void> _startChat() async {
+    if (selectedDevices.isEmpty) {
+      await _startAsPriority();
+      _showError("방장이 되었습니다. 다른 기기가 연결하길 기다립니다.");
+    } else {
+      await _startAsSecondary();
+      if (selectedDevices.length == 1) {
+        await _connectToSingleDevice(selectedDevices.first);
+      } else {
+        await _connectToGroupDevices();
+      }
+    }
+  }
+
+  Future<void> _startAsPriority() async {
     final advertiseData = AdvertiseData(
       includeDeviceName: true,
       manufacturerId: 1234,
-      manufacturerData: Uint8List.fromList([0x01, 0x02, 0x03, 0x04]),
+      manufacturerData: Uint8List.fromList([0x50, 0x52, 0x49, 0x4F]),
       serviceUuid: "12345678-1234-5678-1234-56789abcdef0",
     );
 
@@ -54,9 +65,14 @@ class _BluetoothPageState extends State<BluetoothPage> {
     });
   }
 
-  void _startScanning() {
-    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
-    FlutterBluePlus.scanResults.listen((results) {
+  Future<void> _startAsSecondary() async {
+    FlutterBluePlus.startScan(
+      withServices: [Guid("12345678-1234-5678-1234-56789abcdef0")],
+      timeout: const Duration(seconds: 12),
+    );
+
+    _scanSubscription?.cancel();
+    _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
         if (!devices.any((d) => d.id == r.device.id)) {
           setState(() {
@@ -65,24 +81,16 @@ class _BluetoothPageState extends State<BluetoothPage> {
         }
       }
     });
-  }
 
-  Future<void> _startChat() async {
-    if (selectedDevices.isEmpty) return;
-
-    // 1명 선택 시: 1:1
-    if (selectedDevices.length == 1) {
-      BluetoothDevice device = selectedDevices.first;
-      await _connectToSingleDevice(device);
-    } else {
-      await _connectToGroupDevices();
-    }
+    await Future.delayed(const Duration(seconds: 12));
+    await FlutterBluePlus.stopScan();
+    await _scanSubscription?.cancel();
   }
 
   Future<void> _connectToSingleDevice(BluetoothDevice device) async {
     try {
       await device.connect();
-      List<BluetoothService> services = await device.discoverServices();
+      final services = await device.discoverServices();
       BluetoothCharacteristic? writeChar;
       BluetoothCharacteristic? notifyChar;
 
@@ -104,14 +112,11 @@ class _BluetoothPageState extends State<BluetoothPage> {
             ),
           ),
         );
-
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('사용 가능한 Characteristic을 찾을 수 없습니다.')),
-        );
+        _showError("사용 가능한 Characteristic을 찾을 수 없습니다.");
       }
     } catch (e) {
-      debugPrint("1:1 연결 실패: $e");
+      _showError("연결 실패: $e");
     }
   }
 
@@ -122,7 +127,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
     for (var device in selectedDevices) {
       try {
         await device.connect();
-        var services = await device.discoverServices();
+        final services = await device.discoverServices();
         for (var service in services) {
           for (var c in service.characteristics) {
             if (c.properties.write) writeChars.add(c);
@@ -146,16 +151,19 @@ class _BluetoothPageState extends State<BluetoothPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("사용 가능한 Characteristic이 없습니다.")),
-      );
+      _showError("사용 가능한 Characteristic이 없습니다.");
     }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
   void dispose() {
     FlutterBluePlus.stopScan();
     blePeripheral.stop();
+    _scanSubscription?.cancel();
     super.dispose();
   }
 
@@ -168,7 +176,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
           if (isAdvertising)
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text("광고 중입니다...", style: TextStyle(color: Colors.green)),
+              child: Text("방장: 광고 중입니다", style: TextStyle(color: Colors.green)),
             ),
           Expanded(
             child: RefreshIndicator(
@@ -177,7 +185,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
                   devices.clear();
                   selectedDevices.clear();
                 });
-                _startScanning();
               },
               child: ListView.builder(
                 itemCount: devices.length,
@@ -204,13 +211,13 @@ class _BluetoothPageState extends State<BluetoothPage> {
               ),
             ),
           ),
-          if (selectedDevices.isNotEmpty)
+          if (selectedDevices.isNotEmpty || !isAdvertising)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: _startChat,
                 child: Text(
-                  selectedDevices.length == 1 ? "1:1 채팅 시작" : "단톡방 만들기",
+                  selectedDevices.isEmpty ? "단톡방 만들기" : selectedDevices.length == 1 ? "1:1 채팅 시작" : "단톡방 참가",
                 ),
               ),
             ),
