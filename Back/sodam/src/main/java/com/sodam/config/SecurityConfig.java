@@ -52,6 +52,7 @@ public class SecurityConfig {
 		                        "/member/email_check",
 		                        "/auth/**"
 						).permitAll()
+						.requestMatchers("/admin").hasRole("ADMIN")
 						.anyRequest().authenticated()
 			)
 			.sessionManagement(

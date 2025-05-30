@@ -4,6 +4,7 @@ import 'ttagji/ttagji_intro.dart';
 import 'Namseungdo/namdo_intro.dart';
 import 'biseok/biseok_intro.dart';
 import 'paeng-i/pang_intro.dart'; // ✅ 팽이치기 intro 페이지 import
+import 'rockpaperscissors/rock_paper_intro.dart';
 
 class GamePage extends StatelessWidget {
   const GamePage({super.key});
@@ -29,6 +30,8 @@ class GamePage extends StatelessWidget {
             _gameButton(context, '비석치기'),
             const SizedBox(height: 12),
             _gameButton(context, '팽이치기'), // ✅ 팽이치기만 유지
+            const SizedBox(height: 12),
+            _gameButton(context, '가위바위보'), // ✅ 팽이치기만 유지
           ],
         ),
       ),
@@ -58,6 +61,11 @@ class GamePage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const PangIntroPage()),
+          );
+        } else if (title == '가위바위보') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RockPaperIntroPage()),
           );
         }
       },
