@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class ChatRoomPage extends StatelessWidget {
   final String roomTitle;
 
-  const ChatRoomPage({super.key, required this.roomTitle});
+  const ChatRoomPage({super.key, required this.roomTitle, BluetoothCharacteristic? writeChar, BluetoothCharacteristic? notifyChar});
 
   @override
   Widget build(BuildContext context) {
