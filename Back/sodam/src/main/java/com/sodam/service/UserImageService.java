@@ -15,9 +15,11 @@ public class UserImageService {
 	UserImageRepository user_image_repository;
 	
 	@Transactional
-	public UserImageDomain add_image(UserImageDomain user_image_domain) {
-		return user_image_repository.save(user_image_domain);
-	}
+	   public UserImageDomain add_image(UserImageDomain user_image_domain) {
+	      String id=user_image_domain.getId();
+	      byte[] bytea=user_image_domain.getImage();
+	      return user_image_repository.add_image(id, bytea, user_image_domain.getCreated_date(), user_image_domain.getLast_modified_date());
+	   }
 	@Transactional
 	public Optional<UserImageDomain> get_image(String id) {
 		return user_image_repository.findById(id);

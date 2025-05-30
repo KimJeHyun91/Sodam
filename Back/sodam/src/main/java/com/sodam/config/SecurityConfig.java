@@ -49,6 +49,13 @@ public class SecurityConfig {
 		                        "/member/email_check",  
 		                        "/auth/**"
 						).permitAll()
+						.requestMatchers(
+							"/member/add_image/**",
+							"/member/update_image/**",
+							"/member/delete_image",
+							"/member/get_image"
+						).authenticated()
+						
 						.requestMatchers("/admin").hasRole("ADMIN")
 						.anyRequest().authenticated()
 			)
