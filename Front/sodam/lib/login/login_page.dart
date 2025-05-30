@@ -48,6 +48,10 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('token', response.data['token']);
         await prefs.setString('loggedInId', id);
 
+        await prefs.remove('isGuest');
+        await prefs.remove('guest_uuid');
+        await prefs.remove('guest_nickname');
+
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),

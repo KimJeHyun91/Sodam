@@ -54,11 +54,16 @@ class _MyAppState extends State<MyApp> {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString('loggedInId');
     final token = prefs.getString('token');
+    final isGuest = prefs.getBool('isGuest') ?? false;
 
     setState(() {
-      _initialScreen = (id != null && token != null)
-          ? const MainPage()
-          : const AuthChoicePage(); // 둘 다 있을 때만 MainPage
+      if (id != null && token != null) {
+        _initialScreen = const MainPage(); // 회원 로그인
+      } else if (isGuest) {
+        _initialScreen = const MainPage(); // 비회원 로그인
+      } else {
+        _initialScreen = const AuthChoicePage(); // 비로그인 상태
+      }
     });
   }
 

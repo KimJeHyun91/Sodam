@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../chat/chat_page.dart';
 import '../game/game_page.dart';
 import '../myPage/my_page.dart';
@@ -11,7 +12,29 @@ class CustomBottomNavBar extends StatelessWidget {
     required this.currentIndex,
   });
 
-  void _navigate(BuildContext context, int index) {
+  void _navigate(BuildContext context, int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    final isGuest = prefs.getBool('isGuest') ?? false;
+
+
+    // ❌ 비회원이 게임(1) 또는 내방(2) 클릭 시 차단
+    if (isGuest && index == 1) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('접근 제한'),
+          content: const Text('비회원은 이용하실 수 없습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     Widget targetPage;
 
     switch (index) {
