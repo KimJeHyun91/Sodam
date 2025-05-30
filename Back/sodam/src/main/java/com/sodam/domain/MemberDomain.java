@@ -46,6 +46,7 @@ public class MemberDomain {
 	@ColumnDefault("'U'")
     @Check(constraints = "\"authorization\" IN ('U', 'A')")
 	private Character authorization;
+	private String image_url;
 	@CreatedDate
 	private LocalDateTime created_date;
 	@LastModifiedDate
