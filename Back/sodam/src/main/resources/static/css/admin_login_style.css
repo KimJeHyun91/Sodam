@@ -1,4 +1,69 @@
-@charset "UTF-8";
-body{
-	background-color: antiquewhite;
+/* 배경 전체 */
+body {
+    background-color: #ffffff;
+    font-family: '맑은 고딕', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* 가운데 정렬을 위한 컨테이너 */
+.login-wrapper {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 로그인 박스 */
+.login-box {
+    border: 2px solid #b9cbaa;
+    border-radius: 8px;
+    padding: 30px 40px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    min-width: 200px;
+    text-align: center;
+}
+
+/* 제목 */
+.login-box h2 {
+    margin-top: 10px;       /* 위쪽 여백 */
+    margin-bottom: 30px;    /* 아래쪽 여백 */
+    font-weight: bold;
+    color: #222;
+}
+
+/* 폼 내부 input */
+.login-box form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.login-box label {
+    text-align: left;
+    margin-bottom: 7px;
+    font-weight: bold;
+}
+
+.login-box input {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* 버튼 */
+.login-box button {
+    margin-top: 10px;
+    background-color: #b9cbaa;
+    color: #000;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.login-box button:hover {
+    background-color: #a1b391;
 }

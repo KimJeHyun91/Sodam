@@ -1,0 +1,165 @@
+/* 전체 배경 및 폰트 */
+body {
+  font-family: '맑은 고딕', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+  display: flex;
+}
+
+/* 왼쪽 사이드바 */
+.sidebar {
+  width: 180px;
+  height: 100vh;
+  background-color: #e6ecdf;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+.sidebar h1 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.sidebar h2 {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 40px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar nav button {
+  margin-bottom: 20px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: transparent;
+}
+
+.sidebar nav button:hover {
+  text-decoration: underline;
+}
+
+/* 메인 컨텐츠 */
+.main-content {
+  flex: 1;
+  padding: 40px 60px;
+  box-sizing: border-box;
+  background-color: #fff;
+  position: relative;
+  overflow-x: auto;
+}
+
+/* 상단 바 */
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+#logout_button {
+  background-color: #d3e2c7;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#logout_button:hover {
+  background-color: #c1d4b3;
+}
+
+/* 섹션 타이틀 */
+.section-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 8px;
+}
+
+/* 테이블 영역 */
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+thead tr:first-child td {
+  text-align: right;
+  border: none;
+}
+
+/* 이웃 추가 폼 */
+#member_add_div {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #f3f3f3;
+  border-top: 2px solid #000;
+}
+
+#member_add_div div {
+  margin-bottom: 12px;
+}
+
+label {
+  display: inline-block;
+  width: 100px;
+  font-weight: bold;
+}
+
+input[type="text"], input[type="email"], input[type="password"] {
+  padding: 6px 8px;
+  font-size: 14px;
+  width: 200px;
+}
+
+button {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #aaa;
+  background-color: #fff;
+}
+
+button:hover {
+  background-color: #eee;
+}
