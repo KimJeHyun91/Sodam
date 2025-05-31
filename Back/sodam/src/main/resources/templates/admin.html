@@ -13,7 +13,7 @@
     <h2>관리자페이지</h2>
     <nav>
         <button onclick="showFragment('member')">이웃 관리</button>
-        <button onclick="showFragment('game')">놀이 기록</button>
+        <button onclick="showFragment('game')">놀이 관리</button>
         <button onclick="showFragment('item')">장터 관리</button>
     </nav>
 </div>
@@ -34,7 +34,7 @@
 
     <!-- 게임 기록 -->
     <div id="game_fragment" style="display: none;">
-        <div th:replace="~{fragments/game_reward_fragment::game_reward_table}"></div>
+        <div th:replace="~{fragments/game_fragment::game_table}"></div>
     </div>
 
     <!-- 상점 관리 -->
