@@ -48,50 +48,64 @@
 			<span id="close_add_modal">&times;</span>
 			<h3>새로운 이웃 추가</h3>
 
-			<div>
-				<label for="id">접속이름</label>
-				<input type="text" name="id" id="input_id" placeholder="영소문자를 1글자 이상, 숫자 옵션 6~15자리">
-				<button type="button" id="id_check_button">중복확인</button>
-			</div>
-			<div>
-				<label for="password">비밀번호</label>
-				<input type="text" name="password" id="input_password" placeholder="특수문자/숫자/영문자 각각 최소 1개 이상 사용 8~16자리">
-			</div>
-			<div>
-				<label for="password_verification">비밀번호 확인</label>
-				<input type="text" name="password_verification" id="input_password_verification" placeholder="비밀번호 확인">
-			</div>
-			<div>
-				<label for="email">손글주소</label>
-				<input type="email" name="email" id="input_email" placeholder="손글주소">
-				<button type="button" id="email_check_button">중복확인</button>
-			</div>
-			<div>
-				<input type="text" id="input_email_verification_code" placeholder="코드 입력">
-				<button type="button" id="send_email_verification_code">이메일 인증</button>
-			</div>
-			<div>
-				<label for="nickname">별칭</label>
-				<input type="text" name="nickname" id="input_nickname" placeholder="욕설 제한, 한글 2~8자리, 숫자 1~4자리">
-			</div>
-			<div>
-				<label for="name">이름</label>
-				<input type="text" name="name" id="input_name" placeholder="한글 2~10자리">
-			</div>
-			<div>
-				<label for="birthday">생년월일</label>
-				<input type="text" name="birthday" id="input_birthday" placeholder="날짜 8자리 (0~120세)">
-			</div>
-			<div>
-				<label for="authorization">인가</label>
-				<input type="text" name="authorization" id="input_authorization" placeholder="A 또는 U (A : 관리자 , U : 사용자)">
-			</div>
-			<div>
-				<button type="button" id="member_add_button">추가</button>
-			</div>
+			<!-- 접속이름 -->
+			<label>접속이름</label>
+			<input type="text" id="input_id">
+			<button type="button" id="check_id_button">중복확인</button>
+			<div class="error" id="id_error"></div>
+
+			<!-- 비밀번호 -->
+			<label>비밀번호</label>
+			<input type="password" id="input_password">
+			<div class="error" id="password_error"></div>
+
+			<!-- 비밀번호 확인 -->
+			<label>비밀번호 확인</label>
+			<input type="password" id="input_password_verification">
+			<div class="error" id="confirm_password_error"></div>
+
+			<!-- 이메일 (손글주소) -->
+			<label>손글주소</label>
+			<input type="email" id="input_email">
+			<button type="button" onclick="checkEmail()">중복확인</button>
+			<div class="error" id="email_error"></div>
+
+			<!-- 이메일 인증 코드 -->
+			<input type="text" id="input_email_code" placeholder="코드 입력">
+			<button type="button" onclick="sendEmailCode()">이메일 인증</button>
+			<button type="button" onclick="verifyEmailCode()">확인</button>
+			<div class="error" id="email_code_error"></div>
+
+			<!-- 별칭 -->
+			<label>별칭</label>
+			<input type="text" id="input_nickname">
+			<div class="error" id="nickname_error"></div>
+
+			<!-- 이름 -->
+			<label>이름</label>
+			<input type="text" id="input_name">
+			<div class="error" id="name_error"></div>
+
+			<!-- 생년월일 -->
+			<label>생년월일</label>
+			<input type="text" id="input_birthday" placeholder="YYYYMMDD">
+			<div class="error" id="birthday_error"></div>
+
+			<!-- 인가 -->
+			<label>인가</label>
+			<input type="text" id="input_authorization" placeholder="A 또는 U">
+
+			<!-- 개인정보 동의 -->
+			<label>
+				<input type="checkbox" id="input_agree"> 개인정보 수집 동의
+			</label>
+
+			<button type="button" id="member_add_button">추가</button>
 		</div>
 	</div>
 </div>
+
+<script src="/js/member_add_validator.js"></script>
 
 </body>
 </html>
