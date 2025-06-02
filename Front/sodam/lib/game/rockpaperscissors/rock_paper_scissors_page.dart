@@ -1,27 +1,79 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class RockPaperScissorsPage extends StatefulWidget {
   final String myNickname;
   final String opponentNickname;
 
-  const RockPaperScissorsPage({super.key, required this.myNickname,
-                                          required this.opponentNickname,});
+  const RockPaperScissorsPage({
+    super.key,
+    required this.myNickname,
+    required this.opponentNickname,
+  });
 
   @override
   State<RockPaperScissorsPage> createState() => _RockPaperScissorsPageState();
 }
 
 class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
+  final choices = ['가위', '바위', '보'];
+  int round = 1;
+  int myScore = 0;
+  int opponentScore = 0;
   String? myChoice;
   String? opponentChoice;
   String? winnerNickname;
-  String result = ''; // 결과 메세지 저장
-  bool showChoices = false; // 둘 다 선택했을 때만 ture가 돼서 공개!
+  String result = '';
+  bool showChoices = false;
+  bool countdownEnded = false;
+  String? countdownText;
+  int timeLeft = 5;
+  Timer? timer;
+  bool gameEnded = false; // ✅ 게임 종료 플래그 추가
 
-  final choices = ['가위', '바위', '보'];
+  @override
+  void initState() {
+    super.initState();
+    startCountdown();
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> startCountdown() async {
+    for (int i = 3; i >= 1; i--) {
+      setState(() {
+        countdownText = '$i';
+      });
+      await Future.delayed(const Duration(seconds: 1));
+    }
+    setState(() {
+      countdownText = null;
+      countdownEnded = true;
+    });
+    startTimer();
+  }
+
+  void startTimer() {
+    timeLeft = 5;
+    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (timeLeft > 0) {
+        setState(() {
+          timeLeft--;
+        });
+      } else {
+        t.cancel();
+        if (myChoice == null) selectMyChoice(choices[0]);
+        if (opponentChoice == null) selectOpponentChoice(choices[1]);
+      }
+    });
+  }
 
   void selectMyChoice(String choice) {
-    if (myChoice != null || showChoices) return;
+    if (myChoice != null || !countdownEnded || gameEnded) return;
     setState(() {
       myChoice = choice;
       checkResult();
@@ -29,7 +81,7 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
   }
 
   void selectOpponentChoice(String choice) {
-    if (opponentChoice != null || showChoices) return;
+    if (opponentChoice != null || !countdownEnded || gameEnded) return;
     setState(() {
       opponentChoice = choice;
       checkResult();
@@ -38,135 +90,270 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
 
   void checkResult() {
     if (myChoice != null && opponentChoice != null) {
+      timer?.cancel();
       showChoices = true;
       result = judge(myChoice!, opponentChoice!);
+
+      if (result.contains('비겼습니다')) {
+        Future.delayed(const Duration(seconds: 1), () {
+          showRoundResultDialog('무승부입니다.');
+        });
+        return;
+      }
+
+      if (winnerNickname == widget.myNickname) {
+        myScore++;
+      } else {
+        opponentScore++;
+      }
+
+      Future.delayed(const Duration(seconds: 1), () {
+        showRoundResultDialog('$winnerNickname 승!');
+      });
     }
   }
 
+  String getKoreanRound(int number) {
+    switch (number) {
+      case 1:
+        return '첫 번째 판';
+      case 2:
+        return '두 번째 판';
+      case 3:
+        return '세 번째 판';
+      default:
+        return '';
+    }
+  }
+
+  String getImageForChoice(String choice) {
+    switch (choice) {
+      case '가위':
+        return 'assets/game/scissors.png';
+      case '바위':
+        return 'assets/game/rock.png';
+      case '보':
+        return 'assets/game/paper.png';
+      default:
+        return '';
+    }
+  }
+
+
   String judge(String my, String opponent) {
     if (my == opponent) return '비겼습니다!';
-
     bool iWin = (my == '가위' && opponent == '보') ||
         (my == '바위' && opponent == '가위') ||
         (my == '보' && opponent == '바위');
-
     winnerNickname = iWin ? widget.myNickname : widget.opponentNickname;
     return '${winnerNickname!} 승!';
   }
 
-  String getPersonalResult() {
-    if (!showChoices) return '';
-    if (result.contains('비겼습니다')) return '🤝 비겼습니다! 다시 도전하세요.';
-    return (winnerNickname == widget.myNickname)
-        ? '🎉 승리! 1냥 획득!'
-        : '❌ 패배! 획득한 엽전이 없습니다.';
+  void showFinalDialog(String title, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
   }
-  
-  void resetGame() {
-    setState(() {
-      myChoice = null;
-      opponentChoice = null;
-      winnerNickname = null;
-      result = '';
-      showChoices = false;
+
+  void showFinalResult() {
+    String finalMessage;
+    if (myScore > opponentScore) {
+      finalMessage = '${widget.myNickname} 승리! 🎉 엽전 1개 획득';
+    } else if (myScore < opponentScore) {
+      finalMessage = '${widget.opponentNickname} 승리! ❌ 엽전 획득 실패';
+    } else {
+      finalMessage = '무승부! 🤝';
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Center(
+          child: Text(
+            '최종 결과',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              finalMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              Navigator.of(context).pop(); // 게임 화면 종료
+            },
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showRoundResultDialog(String resultMessage) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => AlertDialog(
+        title: Center( // ✅ 제목 가운데 정렬
+          child: Text(
+            '${getKoreanRound(round)} 결과',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center, // ✅ Column 내부 가운데 정렬
+          children: [
+            Text(
+              '${widget.myNickname}의 선택: $myChoice',
+              textAlign: TextAlign.center, // ✅ 텍스트 가운데
+            ),
+            Text(
+              '${widget.opponentNickname}의 선택: $opponentChoice',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              resultMessage,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 5), () {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (myScore == 2 || opponentScore == 2 || round == 3) {
+        showFinalResult(); // 게임 종료
+      } else {
+        setState(() {
+          round++;
+          myChoice = null;
+          opponentChoice = null;
+          winnerNickname = null;
+          result = '';
+          showChoices = false;
+          countdownEnded = false;
+        });
+        startCountdown();
+      }
     });
   }
 
-  Widget buildChoiceButton(String choice, {required bool isMine}) { 
-    final selected = isMine ? myChoice : opponentChoice;
-    final isSelected = selected == choice;
+  Widget buildImageChoice(String choice, String assetPath) {
+    final isSelected = myChoice == choice;
 
-    final onTap = showChoices
-        ? null
-        : () => isMine ? selectMyChoice(choice) : selectOpponentChoice(choice);
-
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.amber : Colors.white,
-        foregroundColor: Colors.black,
-        side: BorderSide(color: isSelected ? Colors.orange : Colors.grey.shade300),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
+    return GestureDetector(
+      onTap: countdownEnded && !showChoices && !gameEnded
+          ? () => selectMyChoice(choice)
+          : null,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? Colors.orange : Colors.transparent,
+            width: 3,
+          ),
         ),
-        elevation: isSelected ? 6 : 2,
-        shadowColor: isSelected ? Colors.orangeAccent : Colors.black26,
+        child: Image.asset(
+          assetPath,
+          width: 100,
+          height: 100,
+        ),
       ),
-      child: Text(
-          '${isMine ? widget.myNickname : widget.opponentNickname} : $choice',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F0), // 연한 배경
+      backgroundColor: const Color(0xFFFDF7F0),
       appBar: AppBar(
-        title: const Text('가위바위보'),
+        title: Text('가위바위보 - ${getKoreanRound(round)}'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Column(
+        padding: const EdgeInsets.all(16.0),
+        child: countdownText != null
+            ? Center(
+          child: Text(
+            countdownText!,
+            style: const TextStyle(
+              fontSize: 72,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        )
+            : Column(
           children: [
-            Text('${widget.myNickname} 선택: ${showChoices ? myChoice : "?"}'),
-            Text('${widget.opponentNickname} 선택: ${showChoices ? opponentChoice : "?"}'),
+            if (!showChoices && !gameEnded) Text('선택 남은 시간: $timeLeft초'),
             const SizedBox(height: 20),
             if (result.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
-                ),
-                child: Text(
-                  result,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple),
-                ),
+              Text(
+                result,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            Text(
-              getPersonalResult(),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
+                  // 나의 선택
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: choices.map((c) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: buildChoiceButton(c, isMine: true),
-                    )).toList(),
+                    children: [
+                      buildImageChoice('가위', 'assets/game/scissors.png'),
+                      buildImageChoice('바위', 'assets/game/rock.png'),
+                      buildImageChoice('보', 'assets/game/paper.png'),
+                    ],
                   ),
+
+                  // 상대방 선택
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: choices.map((c) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: buildChoiceButton(c, isMine: false),
-                    )).toList(),
+                    children: [
+                      if (showChoices && opponentChoice != null)
+                        Image.asset(
+                          getImageForChoice(opponentChoice!),
+                          width: 100,
+                          height: 100,
+                        )
+                      else
+                        const Text('상대 선택 대기중...'),
+                    ],
                   ),
                 ],
               ),
             ),
-            ElevatedButton(
-              onPressed: resetGame,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC9DAB2),
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('다시하기', style: TextStyle(fontSize: 16)),
-            ),
-            const SizedBox(height: 20),
           ],
         ),
       ),

@@ -80,15 +80,40 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
       theme: ThemeData(
         fontFamily: 'EBSHunminjeongeum',
         brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFFF7F7F7),
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+        ),
       ),
+
       darkTheme: ThemeData(
         fontFamily: 'EBSHunminjeongeum',
         brightness: Brightness.dark,
+        scaffoldBackgroundColor: Color(0xFF121212),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1E1E1E),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF1E1E1E),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.grey,
+        ),
       ),
-      home: _initialScreen, // ✅ 여기서 조건 분기된 화면을 보여줌
+
+      home: _initialScreen,
     );
   }
 }

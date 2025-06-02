@@ -2,18 +2,59 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Admin</title>
-    <meta name="_csrf" th:content="${_csrf?.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
-    <link rel="stylesheet" type="text/css" th:href="@{/css/member_style.css}"/>
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/admin_style.css}" />
 </head>
 <body>
-	<button type="button" id="logout_button" style="position: absolute; right:10px;">로그아웃</button>
-	<div th:replace="~{fragments/member_fragment::member_table}"></div>
-	<div th:replace="~{fragments/member_fragment::member_add_form}"></div>
-	<div th:replace="~{fragments/user_item::user_item}"></div>
-	
-	
-	<script th:src="@{/js/member_javascript.js}" defer></script>
+
+<!-- 왼쪽 사이드바 -->
+<div class="sidebar">
+    <h1>소담톡</h1>
+    <h2>관리자페이지</h2>
+    <nav>
+        <button onclick="showFragment('member')">이웃 관리</button>
+        <button onclick="showFragment('game')">놀이 관리</button>
+        <button onclick="showFragment('item')">장터 관리</button>
+    </nav>
+</div>
+
+<!-- 오른쪽 메인 컨텐츠 -->
+<div class="main-content">
+    <div class="header">
+        <span>홍길동 관리자님</span>
+        &nbsp;&nbsp;
+        <button id="logout_button">로그아웃</button>
+    </div>
+
+    <!-- 회원 관리 -->
+    <div id="member_fragment" style="display: block;">
+        <div th:replace="~{fragments/member_fragment::member_table}"></div>
+        <div th:replace="~{fragments/member_fragment::member_add_form}"></div>
+    </div>
+
+    <!-- 게임 기록 -->
+    <div id="game_fragment" style="display: none;">
+        <div th:replace="~{fragments/game_fragment::game_table}"></div>
+    </div>
+
+    <!-- 상점 관리 -->
+    <div id="item_fragment" style="display: none;">
+        <div th:replace="~{fragments/item_fragment::item_table}"></div>
+    </div>
+</div>
+
+<script>
+    function showFragment(name) {
+        const all = ['member', 'game', 'item'];
+        all.forEach(id => {
+            const el = document.getElementById(`${id}_fragment`);
+            if (el) el.style.display = (id === name ? 'block' : 'none');
+        });
+    }
+</script>
+
+<script src="/js/member_list.js"></script>
+<script src="/js/member_add.js"></script>
+
 </body>
 </html>

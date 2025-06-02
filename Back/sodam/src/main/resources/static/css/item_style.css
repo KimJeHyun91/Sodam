@@ -1,0 +1,59 @@
+/* item_style.css */
+
+.category-section {
+    margin-bottom: 30px;
+}
+
+.category-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.item-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+}
+
+.item-box {
+    width: 100px;
+    height: 100px;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.item-box:hover {
+    transform: scale(1.05);
+    background-color: #f7f7f7;
+}
+
+.item-box img {
+    max-width: 60px;
+    max-height: 60px;
+}
+
+.delete-button {
+    background-color: #f2f2f2;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    float: right;
+}
+
+.delete-button:hover {
+    background-color: #e0e0e0;
+}

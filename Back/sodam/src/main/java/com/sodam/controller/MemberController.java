@@ -267,7 +267,7 @@ public class MemberController {
 	    
 	    result_flag=""+point_flag+point_history_flag+user_reward_item_flag+blocked_device_flag+bluetooth_connected_device+member_flag;
 	    
-	    if(!result_flag.equals("111111")) {
+	    if(!result_flag.equals("삭제가 완료되었습니다.")) {
 	    	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	    	return Integer.parseInt(result_flag);
 	    }

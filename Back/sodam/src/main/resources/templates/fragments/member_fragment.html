@@ -1,157 +1,111 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
+	<meta charset="UTF-8"/>
 </head>
 <body>
-	<div th:fragment="member_table">
-		<h3>이웃 테이블</h3>
-		<button type="button" id="get_member_list_button">전체 이웃 테이블 불러오기</button><br>
+
+<div th:fragment="member_table">
+	<h3>이웃 테이블</h3>
+		<div class="table-controls">
+			<button type="button" id="get_member_list_button">전체 이웃 테이블 불러오기</button><br>
+			<button type="button" id="open_add_modal" style="float: right;">이웃추가</button>
+				<form style="float: right;">
+					<input type="text" id="member_search_input" placeholder="손글주소, 별칭, 이름" />
+				</form>
+		</div>
+	<div class="table-container">
 		<table>
 			<thead>
-				<tr>
-					<td colspan="11">
-						<form>
-							<input type="text">
-							<button type="submit">검색</button>	
-						</form>
-					</td>
-				</tr>
-				<tr>
-					<td>접속이름</td>
-					<td>비밀번호</td>
-					<td>손글주소</td>
-					<td>별칭</td>
-					<td>이름</td>
-					<td>생년월일</td>
-					<td>생성일</td>
-					<td>마지막 수정일</td>
-					<td>인가</td>
-					<td></td>
-					<td></td>
-				</tr>
+			<tr>
+				<td colspan="10">
+				</td>
+			</tr>
+			<tr>
+				<td>접속이름</td>
+				<td>비밀번호</td>
+				<td>손글주소</td>
+				<td>별칭</td>
+				<td>이름</td>
+				<td>생년월일</td>
+				<td>생성일</td>
+				<td>마지막 수정일</td>
+				<td>인가</td>
+				<td>관리</td>
+			</tr>
 			</thead>
-			<tbody>
-				<tr>
-					
-				</tr>
-				<tr>
-					<td>
-						<p id="add_member_id_check_result"></p>
-						<button type="button" id="add_member_id_check">중복검사</button>
-					</td>
-					<td></td>
-					<td>
-						<p id="add_member_email_check_result"></p>
-						<button type="button" id="add_member_email_check">중복검사</button>
-					</td>
-					<td>
-						<p id="add_member_nickname_check_result"></p>
-						<button type="button" id="add_member_nickname_check">중복검사</button>
-					</td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-					<td>
-						<button type="button" id="add_member_email_verification">인증</button>
-					</td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-					<td>
-						<input type="text" id="add_member_email_verification_result">
-						<button type="button" id="add_member_email_verification_submit">인증 코드 확인</button>
-					</td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td><input type="text" name="id" id="modify_id" placeholder="접속이름" disabled></td>
-					<td><input type="text" name="password" id="modify_password" placeholder="비밀번호" disabled></td>
-					<td><input type="text" name="email" id="modify_email" placeholder="손글주소" disabled></td>
-					<td><input type="text" name="nickname" id="modify_nickname" placeholder="별칭" disabled></td>
-					<td><input type="text" name="name" id="modify_name" placeholder="이름" disabled></td>
-					<td><input type="text" name="birthday" id="modify_birthday" placeholder="생년월일" disabled></td>
-					<td><input type="text" name="created_date" id="modify_created_date" placeholder="생성일" disabled></td>
-					<td><input type="text" name="last_modified_date" id="modify_last_modified_date" placeholder="마지막 수정일" disabled></td>
-					<td><input type="text" name="authorization" id="modify_authorization" placeholder="인가" disabled></td>
-					<td colspan="2"><button type="button" id="member_modify_button">수정</button></td>
-				</tr>
-			</tbody>
 			<tbody id="output_member_list">
-				
+			<!-- 백엔드에서 불러온 사용자 정보들이 여기에 표시됨 -->
 			</tbody>
 		</table>
 	</div>
-	<div th:fragment="member_add_form">
+</div>
+
+<!-- 🔹 새로운 이웃 추가 fragment -->
+<div th:fragment="member_add_form">
+	<div id="add_modal" style="display:none;">
 		<div id="member_add_div">
-			<h3 style="text-align: center;">새로운 이웃 추가</h3>
-			<div>
-				<label for="id" id="input_id_label">접속이름</label>
-				<input type="text" name="id" id="input_id" placeholder="영소문자를 1글자 이상, 숫자 옵션 6~15자리">
-				<button type="button" id="id_check_button">중복확인</button>
-			</div>
-			<div>
-				<label for="password" id="input_password_label">비밀번호</label>
-				<input type="text" name="password" id="input_password" placeholder="특수문자/숫자/영문자 각각 최소 1개 이상 사용 8~16자리">
-			</div>
-			<div>
-				<label for="password_verification" id="input_password_verification_label">비밀번호 확인</label>
-				<input type="text" name="password_verification" id="input_password_verification" placeholder="비밀번호 확인">
-			</div>	
-			<div>
-				<label for="email" id="input_email_label">손글주소</label>
-				<input type="email" name="email" id="input_email" placeholder="손글주소">
-				<button type="button" id="email_check_button">중복확인</button>
-			</div>
-			<div>
-				<input type="text" id="input_email_verification_code" placeholder="코드 입력">
-				<button type="button" id="send_email_verification_code">이메일 인증</button>
-			</div>
-			<div>
-				<label for="nickname" id="input_nickname_label">별칭</label>
-				<input type="text" name="nickname" id="input_nickname" placeholder="욕설 제한, 한글 2~8자리, 숫자 1~4자리"><br>
-			</div>	
-			<div>
-				<label for="name" id="input_name_label">이름</label>
-				<input type="text" name="name" id="input_name" placeholder="한글 2~10자리"><br>
-			</div>
-			<div>
-				<label for="birthday" id="input_birthday_label">생년월일</label>
-				<input type="text" name="birthday" id="input_birthday" placeholder="날짜 8자리 (0~120세)"><br>
-			</div>
-			<div>
-				<label for="authorization" id="input_authorization_label">인가</label>
-				<input type="text" name="authorization" id="input_authorization" placeholder="A 또는 U (A : 관리자 , U : 사용자)"><br>
-			</div>
-			<div>
-				<button type="button" id="member_add_button">추가</button>
-			</div>
+			<span id="close_add_modal">&times;</span>
+			<h3>새로운 이웃 추가</h3>
+
+			<!-- 접속이름 -->
+			<label>접속이름</label>
+			<input type="text" id="input_id">
+			<button type="button" id="check_id_button">중복확인</button>
+			<div class="error" id="id_error"></div>
+
+			<!-- 비밀번호 -->
+			<label>비밀번호</label>
+			<input type="password" id="input_password">
+			<div class="error" id="password_error"></div>
+
+			<!-- 비밀번호 확인 -->
+			<label>비밀번호 확인</label>
+			<input type="password" id="input_password_verification">
+			<div class="error" id="confirm_password_error"></div>
+
+			<!-- 이메일 (손글주소) -->
+			<label>손글주소</label>
+			<input type="email" id="input_email">
+			<button type="button" onclick="checkEmail()">중복확인</button>
+			<div class="error" id="email_error"></div>
+
+			<!-- 이메일 인증 코드 -->
+			<input type="text" id="input_email_code" placeholder="코드 입력">
+			<button type="button" onclick="sendEmailCode()">이메일 인증</button>
+			<button type="button" onclick="verifyEmailCode()">확인</button>
+			<div class="error" id="email_code_error"></div>
+
+			<!-- 별칭 -->
+			<label>별칭</label>
+			<input type="text" id="input_nickname">
+			<div class="error" id="nickname_error"></div>
+
+			<!-- 이름 -->
+			<label>이름</label>
+			<input type="text" id="input_name">
+			<div class="error" id="name_error"></div>
+
+			<!-- 생년월일 -->
+			<label>생년월일</label>
+			<input type="text" id="input_birthday" placeholder="YYYYMMDD">
+			<div class="error" id="birthday_error"></div>
+
+			<!-- 인가 -->
+			<label>인가</label>
+			<input type="text" id="input_authorization" placeholder="A 또는 U">
+
+			<!-- 개인정보 동의 -->
+			<label>
+				<input type="checkbox" id="input_agree"> 개인정보 수집 동의
+			</label>
+
+			<button type="button" id="member_add_button">추가</button>
 		</div>
 	</div>
-	
+</div>
+
+<script src="/js/member_add.js"></script>
+
 </body>
 </html>
