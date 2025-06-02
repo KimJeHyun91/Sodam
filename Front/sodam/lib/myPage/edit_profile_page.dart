@@ -379,13 +379,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (response.statusCode == 200 && response.data != null && response.data!.isNotEmpty) {
-        _originalImageBytes = Uint8List.fromList(response.data!);  // ✅ 이건 비교용 아님, 렌더링용으로만 사용
+
+        // _originalImageBytes = Uint8List.fromList(response.data!);  // ✅ 이건 비교용 아님, 렌더링용으로만 사용
+
+
+        setState(() {
+          // ✅ 이미지가 있지만, 여기서 _selectedImage는 null로 둬야 초기상태에서 변화를 안 감지함
+          _selectedImage = response.data as File?;
+        });
+      } else {
+        print("기본 이미지 사용");
         setState(() {
           // ✅ 이미지가 있지만, 여기서 _selectedImage는 null로 둬야 초기상태에서 변화를 안 감지함
           _selectedImage = null;
         });
-      } else {
-        print("기본 이미지 사용");
       }
     } catch (e) {
       print("이미지 로딩 실패: $e");
@@ -456,6 +463,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // 프사 작업중
   Future<int?> _uploadProfileImage(String id, XFile imageFile) async {
     if (id.isEmpty || imageFile == null) {
+
+      print("널값입니다.");
       return 1900;
     }
 
@@ -480,7 +489,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         await http.MultipartFile.fromPath(
           'image',
           imageFile.path,
-          contentType: MediaType('image', imageFile.name.split('.').last),
+
+          contentType: MediaType('image', imageFile.name.split('.').last ?? 'jpeg'),
         ),
       );
 

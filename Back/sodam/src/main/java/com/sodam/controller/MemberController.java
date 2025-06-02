@@ -1,11 +1,20 @@
 package com.sodam.controller;
 
+
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path; 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource; 
+import org.springframework.core.io.UrlResource; 
+import org.springframework.http.HttpHeaders; 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,6 +30,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +39,6 @@ import com.sodam.domain.BluetoothConnectedDeviceDomain;
 import com.sodam.domain.MemberDomain;
 import com.sodam.domain.PointDomain;
 import com.sodam.domain.PointHistoryDomain;
-import com.sodam.domain.UserImageDomain;
 import com.sodam.domain.UserRewardItemDomain;
 import com.sodam.dto.LoginRequestDto;
 import com.sodam.dto.LoginResponseDto;
@@ -40,12 +49,12 @@ import com.sodam.service.MemberService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
 import com.sodam.service.UserDetailsServiceImplement;
-import com.sodam.service.UserImageService;
 import com.sodam.service.UserRewardItemService;
 import com.sodam.util.JwtUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/member")
@@ -61,7 +70,6 @@ public class MemberController {
     @Autowired private AuthenticationManager authentication_manager;
     @Autowired private PasswordEncoder password_encoder;
     @Autowired private JwtUtil jwt_util; 
-    @Autowired private UserImageService user_image_service;
 	
 	@Transactional
 	@PostMapping("/add")
@@ -158,7 +166,6 @@ public class MemberController {
 		String nickname=member_optional.map(MemberDomain::getNickname).orElse(null);
 		
 		final String jwt=jwt_util.generateToken(user_details.getUsername());
-		
 		return ResponseEntity.ok(new LoginResponseDto(jwt, 1020, user_details.getUsername(), nickname));
 	}
 	
@@ -344,8 +351,8 @@ public class MemberController {
 
 
 	@PostMapping("/add_image/{id}")
-	public int add_image(@PathVariable("id") String id, @RequestParam("image") MultipartFile image) {
-		if(		
+	public int add_image(@PathVariable("id") String id, @RequestParam("image") MultipartFile image) throws IOException {
+		if(
 				id==null||
 				id.equals("")||
 				image==null||
@@ -353,63 +360,50 @@ public class MemberController {
 		) {
 			return 1900;
 		}
-		System.out.println("ddddddd");
-		UserImageDomain user_image_domain=new UserImageDomain();
-		user_image_domain.setId(id);
+		
 		try {
-			user_image_domain.setImage(image.getBytes());
-			UserImageDomain result_user_image=user_image_service.add_image(user_image_domain);
-			if(result_user_image!=null) {
+			String stored_file_name=member_service.add_image(id, image);
+			if(stored_file_name!=null) {
 				return 1070;
+			}else {
+				return 1071;
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		}catch(Exception e) {
 			return 1071;
 		}
-		
-		return 1071;
 	}
 	
 	@GetMapping("/get_image")
-	public byte[] get_image(@RequestParam("id") String id) {
+	public ResponseEntity<Resource> get_image(@RequestParam("id") String id) {
 		if(id==null||id.equals("")) {
 			return null;
 		}
-		
-		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
-		if(user_image_optional.isPresent()) {
-			UserImageDomain user_image_domain=user_image_optional.get();
-			byte[] image=user_image_domain.getImage();
-			if(image==null||image.length==0) {
+		try {
+			Resource image_resource=member_service.get_image(id);
+			if(image_resource==null||!image_resource.exists()||!image_resource.isReadable()) {
 				return null;
 			}
-			return image;
 			
+			String content_type=null;
+			try {
+				content_type=Files.probeContentType(image_resource.getFile().toPath());
+			}catch (IOException e) {
+				System.out.println("MIME 타입 결정 오류");
+			}
+			
+			if(content_type==null) {
+				content_type="application/octet-stream";
+			}
+			return ResponseEntity.ok()
+					.contentType(MediaType.parseMediaType(content_type))
+					.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\""+image_resource.getFilename()+"\"")
+					.body(image_resource);
+			
+			
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
 		}
 		return null;
-	}
-	
-	@PutMapping("/update_image/{id}")
-	public int update_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
-		if(id==null||id.equals("")||image==null||image.equals("")) {
-			return 1900;
-		}
-		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
-		if(user_image_optional.isEmpty()) {
-			return 1081;
-		}
-		UserImageDomain user_image_domain=user_image_optional.get();
-		try {
-			user_image_domain.setImage(image.getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
-			return 1081;
-		}
-		UserImageDomain result_user_image=user_image_service.update_image(user_image_domain);
-		if(result_user_image!=null) {
-			return 1080;
-		}
-		return 1081;
 	}
 	
 	@DeleteMapping("/delete_image")
@@ -417,15 +411,7 @@ public class MemberController {
 		if(id==null||id.equals("")) {
 			return 1900;
 		}
-		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
-		if(user_image_optional.isEmpty()) {
-			return 1091;
-		}
-		Optional<UserImageDomain> result_user_image=user_image_service.delete_image(id);
-		if(result_user_image.isEmpty()) {
-			return 1090;
-		}
-		return 1091;
+		return member_service.delete_image(id);
 	}
 	
 	@GetMapping("/find-id")
