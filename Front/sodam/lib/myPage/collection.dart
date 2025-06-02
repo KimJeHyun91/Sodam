@@ -1,7 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../dio_client.dart';
 
-class CollectionPage extends StatelessWidget {
+class RewardItem {
+  final String name;
+  final String category; // 'A' or 'B'
+  final bool owned;
+  final String? imagePath; // 문양일 경우만 사용
+
+  RewardItem({
+    required this.name,
+    required this.category,
+    required this.owned,
+    this.imagePath,
+  });
+}
+
+class CollectionPage extends StatefulWidget {
   const CollectionPage({super.key});
+
+  @override
+  State<CollectionPage> createState() => _CollectionPageState();
+}
+
+class _CollectionPageState extends State<CollectionPage> {
+  List<RewardItem> titleList = [];
+  List<RewardItem> patternList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // fetchTitlesWithOwnership();
+    fetchRewards();
+  }
+
+  Future<void> fetchRewards() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getString('loggedInId');
+      if (id == null || id.isEmpty) {
+        print('❌ 유저 ID 없음');
+        return;
+      }
+
+      final rewardRes = await DioClient.dio.get('/reward/get_reward_item_list');
+      final ownedRes = await DioClient.dio.get('/reward/get_user_reward_item_id_list', queryParameters: {
+        'id': id,
+      });
+
+      if (rewardRes.statusCode == 200 && ownedRes.statusCode == 200) {
+        final List<dynamic> allItems = rewardRes.data;
+        final List<dynamic> ownedItems = ownedRes.data;
+        final ownedItemNos = ownedItems
+            .map((item) => item['user_reward_item_id']['reward_item_no'])
+            .toSet();
+
+        List<RewardItem> titles = [];
+        List<RewardItem> patterns = [];
+
+        for (final item in allItems) {
+          final rewardNo = item['reward_item_no'];
+          final name = item['reward_item_name'];
+          final category = item['reward_item_category'];
+          final owned = ownedItemNos.contains(rewardNo);
+
+          if (category == 'A') {
+            titles.add(RewardItem(name: name, category: 'A', owned: owned));
+          } else if (category == 'D') {
+            patterns.add(RewardItem(
+              name: name,
+              category: 'D',
+              owned: owned,
+              imagePath: item['reward_item_image_url'],
+            ));
+          }
+        }
+
+        setState(() {
+          titleList = titles;
+          patternList = patterns;
+        });
+      }
+    } catch (e) {
+      print('리워드 아이템 가져오기 실패: $e');
+    }
+  }
+
+  void _showApplyDialog(BuildContext context, RewardItem item) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("아이템 적용"),
+          content: Text('"${item.name}" 아이템을 적용하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("취소"),
+            ),
+            TextButton(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                if (item.category == 'A') {
+                  await prefs.setString('selectedTitle', item.name);
+                } else if (item.category == 'D') {
+                  await prefs.setString('selectedIcon', item.imagePath ?? '');
+                }
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+              },
+              child: const Text("예"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,56 +134,37 @@ class CollectionPage extends StatelessWidget {
           children: [
             const Text("문양", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _twoLineScroll([
-              "assets/images/icon1.png",
-              "assets/images/icon2.png",
-              "assets/images/icon3.png",
-              "assets/images/icon4.png",
-              "assets/images/icon5.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
-              "assets/images/icon6.png",
+            _twoLineScroll(patternList), // ✅ 이미지 기반 RewardItem
 
-            ]),
 
             const SizedBox(height: 24),
             const Text("칭호", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _twoLineScroll([
-              "성실한", "승부사", "패배자", "수다쟁이", "관찰자", "성실한", "승부사", "패배자", "수다쟁이", "관찰자"
-            ], isText: true),
+            _twoLineScroll(titleList), // ✅ 텍스트 기반 RewardItem
           ],
         ),
       ),
     );
   }
 
-  Widget _twoLineScroll(List items, {bool isText = false}) {
-    // 한 줄에 최대 3개씩 2줄씩 나누기
-    List<List> rows = [[], []];
+  Widget _twoLineScroll(List<RewardItem> items) {
+    List<List<RewardItem>> rows = [[], []];
     for (int i = 0; i < items.length; i++) {
       rows[i % 2].add(items[i]);
     }
 
     return SizedBox(
-      height: 200, // 전체 높이 (두 줄 포함)
+      height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: rows[0].length,
         itemBuilder: (context, index) {
           return Column(
             children: [
-              _collectionItem(context, rows[0][index], isText),
+              _collectionItem(context, rows[0][index]),
               const SizedBox(height: 12),
               if (index < rows[1].length)
-                _collectionItem(context, rows[1][index], isText),
+                _collectionItem(context, rows[1][index]),
             ],
           );
         },
@@ -77,21 +172,38 @@ class CollectionPage extends StatelessWidget {
     );
   }
 
-  Widget _collectionItem(BuildContext context, dynamic data, bool isText) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[850]
-            : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+  Widget _collectionItem(BuildContext context, RewardItem item) {
+    final isOwned = item.owned;
+
+    return GestureDetector(
+      onTap: isOwned
+          ? () {
+        _showApplyDialog(context, item); // 이제 RewardItem 전체 넘김
+      }
+          : null,
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: isOwned
+              ? (Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[850]
+              : Colors.white)
+              : Colors.grey[400],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: item.category == 'A'
+            ? Text(
+          item.name,
+          style: TextStyle(
+            fontSize: 14,
+            color: isOwned ? Colors.black : Colors.grey[700],
+          ),
+        )
+            : Image.asset(item.imagePath ?? '', fit: BoxFit.contain),
       ),
-      alignment: Alignment.center,
-      child: isText
-          ? Text(data, style: const TextStyle(fontSize: 14))
-          : Image.asset(data, fit: BoxFit.contain),
     );
   }
 }

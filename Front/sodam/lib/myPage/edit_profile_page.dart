@@ -379,6 +379,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (response.statusCode == 200 && response.data != null && response.data!.isNotEmpty) {
+
         // _originalImageBytes = Uint8List.fromList(response.data!);  // ✅ 이건 비교용 아님, 렌더링용으로만 사용
 
 
@@ -462,6 +463,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // 프사 작업중
   Future<int?> _uploadProfileImage(String id, XFile imageFile) async {
     if (id.isEmpty || imageFile == null) {
+
       print("널값입니다.");
       return 1900;
     }
@@ -487,6 +489,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         await http.MultipartFile.fromPath(
           'image',
           imageFile.path,
+
           contentType: MediaType('image', imageFile.name.split('.').last ?? 'jpeg'),
         ),
       );
