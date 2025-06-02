@@ -2,6 +2,7 @@ package com.sodam.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,7 +20,7 @@ import com.sodam.util.JwtRequestFilter;
 @EnableWebSecurity
 public class SecurityConfig {
 	@Autowired
-	private UserDetailsServiceImplement user_detail_service;
+	private UserDetailsServiceImplement user_detail_service_implement;
 	@Autowired
 	private JwtRequestFilter jwt_request_filter;
 	@Autowired
@@ -30,14 +31,16 @@ public class SecurityConfig {
 		AuthenticationManagerBuilder authentication_manager_builder=
 				http_security.getSharedObject(AuthenticationManagerBuilder.class);
 		authentication_manager_builder
-			.userDetailsService(user_detail_service)
+			.userDetailsService(user_detail_service_implement)
 			.passwordEncoder(password_encoder);
 		return authentication_manager_builder.build();
 	}
 	
 	@Bean
-	public SecurityFilterChain security_filter_chain(HttpSecurity http_security) throws Exception{
+	@Order(1)
+	public SecurityFilterChain api_filter_chain(HttpSecurity http_security) throws Exception{
 		http_security
+			.securityMatcher("/member/**", "/auth/**", "/chat/**", "/gameroom/**", "/point/**", "/reward/**", "/bluetooth/**")
 			.csrf(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests(
 					auth->
@@ -46,7 +49,7 @@ public class SecurityConfig {
 		                        "/member/add",          
 		                        "/member/id_check",     
 		                        "/member/nickname_check",
-		                        "/member/email_check",  
+		                        "/member/email_check",
 		                        "/auth/**"
 						).permitAll()
 						.requestMatchers("/admin").hasRole("ADMIN")
@@ -55,11 +58,38 @@ public class SecurityConfig {
 			.sessionManagement(
 					session->
 					session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-			);
-		http_security
+			)
 			.addFilterBefore(jwt_request_filter, UsernamePasswordAuthenticationFilter.class);
 		
 		return http_security.build();
+	}
+	
+	@Bean
+	@Order(2)
+	public SecurityFilterChain form_login_filter_chain(HttpSecurity http_security) throws Exception{
+		http_security
+			.authorizeHttpRequests(
+					auth->auth
+					.requestMatchers("/admin_login").permitAll()
+                    .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
+                    .anyRequest().permitAll()
+			)
+			.formLogin(
+					form->form
+					.loginPage("/admin_login")
+					.defaultSuccessUrl("/admin/access", true)
+					.permitAll()
+			)
+			.logout(
+					logout->logout
+					.logoutSuccessUrl("/admin_login")
+			)
+			.sessionManagement(
+					session->session
+					.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+			);
+		return http_security.build();
+		
 	}
 	
 	
