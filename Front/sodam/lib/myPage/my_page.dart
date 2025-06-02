@@ -444,7 +444,9 @@ class _MyPageState extends State<MyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Colors.black
+          : const Color(0xFFF2F2F2),
       body: SafeArea(
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
