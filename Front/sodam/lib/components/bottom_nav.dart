@@ -40,16 +40,16 @@ class CustomBottomNavBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        targetPage = const ChatPage();
+        targetPage = ChatPage(key: UniqueKey());
         break;
       case 1:
-        targetPage = const GamePage();
+        targetPage = GamePage(key: UniqueKey());
         break;
       case 2:
-        targetPage = const MyPage();
+        targetPage = MyPage(key: UniqueKey());
         break;
       default:
-        return;
+        return; // 또는 throw Error
     }
 
     // 중복 클릭 방지

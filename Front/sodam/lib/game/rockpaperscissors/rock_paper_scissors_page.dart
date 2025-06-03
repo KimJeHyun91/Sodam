@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
-import '../../api/point_api.dart';
+import '../point_util.dart';
+import '../game_page.dart';
 
 class RockPaperScissorsPage extends StatefulWidget {
   final String myNickname;
@@ -172,9 +172,8 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
     String finalMessage;
     final isMyWin = myScore > opponentScore;
 
-    if (myScore > opponentScore) {
+    if (isMyWin) {
       finalMessage = '${widget.myNickname} 승리! 🎉 엽전 50냥 획득';
-      giveReward(50, reasonCode: 'RPS_WIN'); // ✅ 변경된 함수 사용
     } else if (myScore < opponentScore) {
       finalMessage = '${widget.opponentNickname} 승리! ❌ 엽전 획득 실패';
     } else {
@@ -185,10 +184,7 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Center(child: Text('최종 결과',
-            textAlign: TextAlign.center,
-          ),
-        ),
+        title: const Center(child: Text('최종 결과', textAlign: TextAlign.center)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -202,9 +198,15 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop(); // 다이얼로그 닫기
-              Navigator.of(context).pop(); // 게임 화면 종료
+              if (myScore > opponentScore) {
+                await giveReward(50, reasonCode: 'RPS_WIN');
+              }
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const GamePage()),
+              );
             },
             child: const Text('확인'),
           ),
@@ -216,7 +218,7 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
   void showRoundResultDialog(String resultMessage) {
     showDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: Center( // ✅ 제목 가운데 정렬
           child: Text(
