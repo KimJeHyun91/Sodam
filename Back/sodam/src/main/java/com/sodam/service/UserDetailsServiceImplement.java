@@ -34,9 +34,11 @@ public class UserDetailsServiceImplement implements UserDetailsService{
 			authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 		}
 		
+
 		
 		
 		return new User(member_domain.getId(), member_domain.getPassword(), authorities);
 	}
 	
 }
+

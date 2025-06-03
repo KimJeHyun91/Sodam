@@ -4,6 +4,7 @@
     <option name="deviceSelectionList">
       <list>
         <PersistentDeviceSelectionData>
+
           <option name="api" value="34" />
           <option name="brand" value="Sony" />
           <option name="codename" value="A402SO" />
@@ -16,6 +17,7 @@
           <option name="screenY" value="2520" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+
           <option name="api" value="27" />
           <option name="brand" value="DOCOMO" />
           <option name="codename" value="F01L" />
@@ -220,6 +222,7 @@
           <option name="screenY" value="2142" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+
           <option name="api" value="35" />
           <option name="brand" value="google" />
           <option name="codename" value="caiman" />
@@ -232,6 +235,7 @@
           <option name="screenY" value="2142" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+
           <option name="api" value="34" />
           <option name="brand" value="google" />
           <option name="codename" value="comet" />

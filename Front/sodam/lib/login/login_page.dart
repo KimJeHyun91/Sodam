@@ -49,6 +49,11 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('token', response.data['token']);
         await prefs.setString('loggedInId', id);
 
+
+        await prefs.remove('isGuest');
+        await prefs.remove('guest_uuid');
+        await prefs.remove('guest_nickname');
+
         await prefs.setString('jwtToken', response.data['token']);
         print('✅ 저장된 JWT 토큰: ${prefs.getString('jwtToken')}');
 
@@ -73,24 +78,46 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData.light().copyWith(brightness: Brightness.light),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8F8F8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      // 접속이름
+
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8F8),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: [
+                    // 접속이름
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('접속이름', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    TextField(controller: _idController),
+                    const SizedBox(height: 16),
+
+                    // 비밀번호
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('비밀번호', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    TextField(
+                      controller: _pwController,
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 에러 메시지
+                    if (loginError)
+
                       const Align(
                         alignment: Alignment.centerLeft,
                         child: Text('접속이름', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -206,6 +233,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
 import '../chat/chat_service.dart';
 import '../utils/uuid_manager.dart';
+
 
 class ChatRoomPage extends StatefulWidget {
   final String roomTitle;
@@ -9,6 +11,7 @@ class ChatRoomPage extends StatefulWidget {
   final List<BluetoothCharacteristic>? notifyChars;
   final int? roomId;
   final String? targetUserId; // 차단 대상자 UUID
+
 
   const ChatRoomPage({
     super.key,
@@ -188,6 +191,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     controller.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {

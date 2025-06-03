@@ -4,6 +4,9 @@ import 'ttagji/ttagji_game_page.dart'; // 딱지치기
 import 'biseok/biseok_game_page.dart'; // 비석치기
 import 'paeng-i/spinner_selection_page.dart'; // 팽이 선택 페이지
 
+import 'rockpaperscissors/rock_paper_scissors_page.dart';
+
+
 class SelectUserPage extends StatefulWidget {
   final String gameTitle; // 예: '딱지치기', '산가지', '남승도', '팽이치기'
 
@@ -18,25 +21,25 @@ class _SelectUserPageState extends State<SelectUserPage> {
     {
       "name": "김제현",
       "email": "kjh910920",
-      "avatar": "assets/profile1.png",
-      "checked": true,
+      "avatar": "assets/images/profile1.png",
+      "checked": false,
     },
     {
       "name": "이하늘",
       "email": "harull817@gmail.com",
-      "avatar": "assets/profile2.png",
-      "checked": true,
+      "avatar": "assets/images/profile2.png",
+      "checked": false,
     },
     {
-      "name": "정용태",
+      "name": "정웅태",
       "email": "grand7246@gmail.com",
-      "avatar": "assets/profile3.png",
+      "avatar": "assets/images/profile3.png",
       "checked": false,
     },
     {
       "name": "김기찬",
       "email": "",
-      "avatar": "assets/profile4.png",
+      "avatar": "assets/images/profile.png",
       "checked": false,
     },
   ];
@@ -44,6 +47,9 @@ class _SelectUserPageState extends State<SelectUserPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Colors.black
+          : Colors.white,
       appBar: AppBar(
         title: Text("${widget.gameTitle} - 놀이 상대 선택"),
         backgroundColor: Colors.white,
@@ -66,7 +72,9 @@ class _SelectUserPageState extends State<SelectUserPage> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E1E1E) // 어두운 회색
+                          : const Color(0xFFF7F7F7), // 연한 회색
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -92,7 +100,19 @@ class _SelectUserPageState extends State<SelectUserPage> {
                           value: user["checked"],
                           onChanged: (val) {
                             setState(() {
-                              users[index]["checked"] = val!;
+                              final selectedCount = users.where((u) => u["checked"] == true).length;
+
+                              final maxSelectable = widget.gameTitle == '남승도' ? 3 : 1;
+
+                              if (val == true) {
+                                // 선택하려는 경우 → 현재 선택된 수가 최대보다 작을 때만 허용
+                                if (selectedCount < maxSelectable) {
+                                  users[index]["checked"] = true;
+                                }
+                              } else {
+                                // 선택 해제는 항상 허용
+                                users[index]["checked"] = false;
+                              }
                             });
                           },
                         )
@@ -107,6 +127,40 @@ class _SelectUserPageState extends State<SelectUserPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+
+                  final selectedUsers = users.where((user) => user["checked"] == true).toList();
+                  final selectedCount = selectedUsers.length;
+
+                  bool isValid = false;
+
+                  if (widget.gameTitle == '남승도') {
+                    isValid = selectedCount == 3;
+                  } else {
+                    isValid = selectedCount == 1;
+                  }
+
+                  if (!isValid) {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text('인원 수 확인!'),
+                        content: Text(
+                          widget.gameTitle == '남승도'
+                              ? '남승도는 3명을 선택해야 합니다.'
+                              : '1명을 선택해야 합니다.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('확인'),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+
+
                   if (widget.gameTitle == '딱지치기') {
                     Navigator.push(
                       context,
@@ -122,6 +176,18 @@ class _SelectUserPageState extends State<SelectUserPage> {
                       context,
                       MaterialPageRoute(builder: (_) => const SpinnerSelectionPage()),
                     );
+
+                  } else if (widget.gameTitle == '가위바위보') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RockPaperScissorsPage(
+                          myNickname: '나',
+                          opponentNickname: selectedUsers[0]['name'],
+                        ),
+                      ),
+                    );
+
                   }
                 },
                 style: ElevatedButton.styleFrom(

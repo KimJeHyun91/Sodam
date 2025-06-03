@@ -59,7 +59,9 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+
       body: ListView(
+
         padding: const EdgeInsets.all(16),
         children: [
           const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -85,6 +87,7 @@ class _ChatPageState extends State<ChatPage> {
           const SizedBox(height: 8),
           _secretChatList(context, customRooms),
         ],
+      ),
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );

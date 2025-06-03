@@ -15,7 +15,9 @@ class BluetoothPage extends StatefulWidget {
 class _BluetoothPageState extends State<BluetoothPage> {
   final FlutterBlePeripheral blePeripheral = FlutterBlePeripheral();
   List<BluetoothDevice> devices = [];
+
   Set<BluetoothDevice> selectedDevices = {};
+
   bool isAdvertising = false;
 
   @override
@@ -44,7 +46,9 @@ class _BluetoothPageState extends State<BluetoothPage> {
     final advertiseData = AdvertiseData(
       includeDeviceName: true,
       manufacturerId: 1234,
+
       manufacturerData: Uint8List.fromList("BLE_1to1_CHAT".codeUnits),
+
       serviceUuid: "12345678-1234-5678-1234-56789abcdef0",
     );
 
@@ -55,6 +59,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
   }
 
   void _startScanning() {
+
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
@@ -64,6 +69,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
         if (isAppUser && !devices.any((d) => d.id == r.device.id)) {
           debugPrint("✅ BLE 사용자 발견: ${r.device.name} (${r.device.id})");
+
           setState(() {
             devices.add(r.device);
           });
@@ -71,6 +77,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
       }
     });
   }
+
 
   Future<void> _startChat() async {
     if (selectedDevices.isEmpty) return;
@@ -85,14 +92,17 @@ class _BluetoothPageState extends State<BluetoothPage> {
   Future<void> _connectToSingleDevice(BluetoothDevice device) async {
     try {
       await device.connect();
+origin/develop
       List<BluetoothService> services = await device.discoverServices();
       BluetoothCharacteristic? writeChar;
       BluetoothCharacteristic? notifyChar;
 
       for (var service in services) {
         for (var c in service.characteristics) {
+
           if (c.properties.write && writeChar == null) writeChar = c;
           if (c.properties.notify && notifyChar == null) notifyChar = c;
+
         }
       }
 
@@ -102,12 +112,15 @@ class _BluetoothPageState extends State<BluetoothPage> {
           MaterialPageRoute(
             builder: (_) => ChatRoomPage(
               roomTitle: device.name.isEmpty ? 'BLE Chat' : device.name,
+
               writeChars: [writeChar!],
               notifyChars: [notifyChar!],
+
             ),
           ),
         );
       } else {
+
         _showError("사용 가능한 Characteristic을 찾을 수 없습니다.");
       }
     } catch (e) {
@@ -156,6 +169,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
     );
   }
 
+rigin/develop
   @override
   void dispose() {
     FlutterBluePlus.stopScan();
@@ -166,27 +180,34 @@ class _BluetoothPageState extends State<BluetoothPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: AppBar(title: const Text('BLE 사용자 목록')),
+
       body: Column(
         children: [
           if (isAdvertising)
             const Padding(
               padding: EdgeInsets.all(8.0),
+
               child: Text("📢 광고 중입니다...", style: TextStyle(color: Colors.green)),
+
             ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
+
                 setState(() {
                   devices.clear();
                   selectedDevices.clear();
                 });
+
                 _startScanning();
               },
               child: ListView.builder(
                 itemCount: devices.length,
                 itemBuilder: (context, index) {
                   final device = devices[index];
+
                   final selected = selectedDevices.contains(device);
                   return ListTile(
                     title: Text(device.name.isEmpty ? '(No Name)' : device.name),
@@ -203,11 +224,13 @@ class _BluetoothPageState extends State<BluetoothPage> {
                         });
                       },
                     ),
+
                   );
                 },
               ),
             ),
           ),
+
           if (selectedDevices.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -216,8 +239,11 @@ class _BluetoothPageState extends State<BluetoothPage> {
                 child: Text(selectedDevices.length == 1 ? "1:1 채팅 시작" : "단톡방 만들기"),
               ),
             ),
+rigin/develop
         ],
       ),
     );
   }
+
 }
+

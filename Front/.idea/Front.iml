@@ -6,21 +6,15 @@
       <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
+
       <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
-<<<<<<< Updated upstream
-      <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
-      <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
-      <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
-      <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
-      <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
-      <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
-=======
->>>>>>> Stashed changes
+
+
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

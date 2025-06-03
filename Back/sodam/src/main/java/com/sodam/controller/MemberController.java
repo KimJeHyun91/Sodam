@@ -1,11 +1,24 @@
 package com.sodam.controller;
 
+
+
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path; 
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.core.io.Resource; 
+import org.springframework.core.io.UrlResource; 
+import org.springframework.http.HttpHeaders; 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,6 +34,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,12 +54,14 @@ import com.sodam.service.MemberService;
 import com.sodam.service.PointHistoryService;
 import com.sodam.service.PointService;
 import com.sodam.service.UserDetailsServiceImplement;
-import com.sodam.service.UserImageService;
+
 import com.sodam.service.UserRewardItemService;
 import com.sodam.util.JwtUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @RestController
 @RequestMapping("/member")
@@ -62,7 +78,6 @@ public class MemberController {
     @Autowired private PasswordEncoder password_encoder;
     @Autowired private JwtUtil jwt_util; 
     @Autowired private UserImageService user_image_service;
-
 
 	
 	@Transactional
@@ -160,7 +175,7 @@ public class MemberController {
 		String nickname=member_optional.map(MemberDomain::getNickname).orElse(null);
 		
 		final String jwt=jwt_util.generateToken(user_details.getUsername());
-		
+
 		return ResponseEntity.ok(new LoginResponseDto(jwt, 1020, user_details.getUsername(), nickname));
 	}
 	
@@ -262,7 +277,7 @@ public class MemberController {
 	    
 	    result_flag=""+point_flag+point_history_flag+user_reward_item_flag+blocked_device_flag+bluetooth_connected_device+member_flag;
 	    
-	    if(!result_flag.equals("111111")) {
+	    if(!result_flag.equals("삭제가 완료되었습니다.")) {
 	    	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	    	return Integer.parseInt(result_flag);
 	    }
@@ -346,8 +361,10 @@ public class MemberController {
 
 
 	@PostMapping("/add_image/{id}")
-	public int add_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
-		if(		
+
+	public int add_image(@PathVariable("id") String id, @RequestParam("image") MultipartFile image) throws IOException {
+		if(
+
 				id==null||
 				id.equals("")||
 				image==null||
@@ -356,6 +373,7 @@ public class MemberController {
 			return 1900;
 		}
 		
+
 		UserImageDomain user_image_domain=new UserImageDomain();
 		user_image_domain.setId(id);
 		try {
@@ -387,10 +405,12 @@ public class MemberController {
 			}
 			return image;
 			
+
 		}
 		return null;
 	}
 	
+
 	@PutMapping("/update_image/{id}")
 	public int update_image(@PathVariable String id, @RequestParam("image") MultipartFile image) {
 		if(id==null||id.equals("")||image==null||image.equals("")) {
@@ -414,11 +434,13 @@ public class MemberController {
 		return 1081;
 	}
 	
+
 	@DeleteMapping("/delete_image")
 	public int delete_image(@RequestParam("id") String id) {
 		if(id==null||id.equals("")) {
 			return 1900;
 		}
+
 		Optional<UserImageDomain> user_image_optional=user_image_service.get_image(id);
 		if(user_image_optional.isEmpty()) {
 			return 1091;
@@ -448,3 +470,4 @@ public class MemberController {
 
 
 }
+

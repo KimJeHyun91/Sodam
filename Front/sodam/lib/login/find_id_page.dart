@@ -137,6 +137,7 @@ class _FindIdPageState extends State<FindIdPage> {
         message = res['message'] ?? message;
       }
       setState(() {
+
         if (message.contains('만료')) {
           _codeError = '인증번호가 만료되었습니다.';
         } else if (message.contains('일치')) {
@@ -144,6 +145,7 @@ class _FindIdPageState extends State<FindIdPage> {
         } else {
           _codeError = message;
         }
+
         _verified = false;
         _idResult = null;
       });
@@ -161,6 +163,7 @@ class _FindIdPageState extends State<FindIdPage> {
   @override
   Widget build(BuildContext context) {
     return Theme(
+
       data: ThemeData.light().copyWith(brightness: Brightness.light),
       child: Scaffold(
         appBar: AppBar(title: const Text('접속이름 찾기')),
@@ -258,8 +261,10 @@ class _FindIdPageState extends State<FindIdPage> {
               ),
             ],
           ),
+
         ),
       ),
+    ),
     );
   }
 }

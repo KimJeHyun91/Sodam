@@ -13,6 +13,44 @@ import java.util.Map;
 import java.util.Optional;
 
 
+import com.sodam.domain.MemberDomain;
+import com.sodam.dto.LoginResponseDto;
+import com.sodam.service.MemberService;
+import com.sodam.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.sodam.service.EmailService;
+
+import lombok.RequiredArgsConstructor;
+
+import com.sodam.domain.MemberDomain;
+import com.sodam.service.EmailService;
+import com.sodam.service.MemberService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Optional;
+
+
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -139,4 +177,10 @@ public class AuthController {
         return ResponseEntity.ok(updated != null ? 1050 : 1051); 
 
     }
+
 }
+
+    
+
+    
+
