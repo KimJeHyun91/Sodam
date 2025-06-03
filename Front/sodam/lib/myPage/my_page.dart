@@ -62,67 +62,14 @@ class _MyPageState extends State<MyPage> {
     fetchData();
   }
 
-  // Future<void> fetchData() async {
-  //   try {
-  //     final prefs = await SharedPreferences.getInstance();
-  //     final id = prefs.getString('loggedInId');
-  //     if (id != null) {
-  //       await fetchAttendanceDates(id); // ✅ 출석 정보 불러오기
-  //     }
-  //
-  //     if (id == null) {
-  //       setState(() {
-  //         nickname = '비회원';
-  //         email = '로그인 필요';
-  //         isLoading = false;
-  //         _walletPoint = 0; // 포인트도 초기화
-  //       });
-  //       return;
-  //     }
-  //
-  //     // 닉네임, 이메일
-  //     final response = await dio.get(
-  //       '/member/get_member_object',
-  //       queryParameters: {'id': id},
-  //     );
-  //
-  //     // 포인트
-  //     final pointResponse = await dio.get(
-  //       '/point/get_info',
-  //       queryParameters: {'id': id},
-  //     );
-  //
-  //     if (response.data is Map<String, dynamic>) {
-  //       setState(() {
-  //         nickname = response.data['nickname'] ?? '닉네임 없음';
-  //         email = response.data['email'] ?? '이메일 없음';
-  //         _walletPoint = pointResponse.data['current_point'] ?? 0; // 포인트 설정
-  //         isLoading = false;
-  //       });
-  //     } else {
-  //       setState(() {
-  //         nickname = '정보 없음';
-  //         email = '정보 없음';
-  //         _walletPoint = 0;
-  //         isLoading = false;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print('회원 정보 로딩 실패: $e');
-  //     setState(() {
-  //       nickname = '에러';
-  //       email = '불러오기 실패';
-  //       _walletPoint = 0;
-  //       isLoading = false;
-  //     });
-  //   }
-  // }
   Future<void> fetchData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getString('loggedInId');
+      print('🧩 저장된 ID: "$id"');
 
-      if (id == null || id.isEmpty) {
+      if (id == null || id.trim().isEmpty) {
+        print('⚠️ ID 없음 - 비회원 처리');
         setState(() {
           nickname = '비회원';
           email = '로그인 필요';
@@ -132,11 +79,14 @@ class _MyPageState extends State<MyPage> {
         return;
       }
 
-      await fetchAttendanceDates(id); // ✅ 출석 정보
+      await fetchAttendanceDates(id);
 
       final response = await DioClient.dio.get('/member/get_member_object', queryParameters: {'id': id});
-      final pointResponse = await DioClient.dio.get('/point/get_info', queryParameters: {'id': id});
-
+      // final pointResponse = await DioClient.dio.get('/point/get_info', queryParameters: {'id': id});
+      final pointResponse = await DioClient.dio.get(
+        '/point/get_info_id_object',
+        queryParameters: {'id': id},
+      );
       print("👤 member response: ${response.data}");
       print("💰 point response: ${pointResponse.data}");
 
@@ -152,7 +102,16 @@ class _MyPageState extends State<MyPage> {
         isLoading = false;
       });
     } catch (e) {
-      print('❌ 회원 정보 로딩 실패: $e');
+      if (e is DioException) {
+        print('❌ Dio 요청 실패');
+        print('📛 요청 경로: ${e.requestOptions.path}');
+        print('📛 상태코드: ${e.response?.statusCode}');
+        print('📛 응답본문: ${e.response?.data}');
+        print('📛 응답타입: ${e.response?.headers.map['content-type']}');
+      } else {
+        print('❌ 예외: $e');
+      }
+
       setState(() {
         nickname = '에러';
         email = '불러오기 실패';
@@ -205,10 +164,18 @@ class _MyPageState extends State<MyPage> {
                       right: 12,
                       child: GestureDetector(
                         onTap: () {
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(builder: (context) => const SettingsPage()),
+                          // );
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SettingsPage()),
-                          );
+                            MaterialPageRoute(builder: (_) => const SettingsPage()),
+                          ).then((result) {
+                            if (result == true) {
+                              fetchData(); // 새로고침
+                            }
+                          });
                         },
                         child: const Icon(Icons.settings),
                       ),

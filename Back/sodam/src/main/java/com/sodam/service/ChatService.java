@@ -34,7 +34,7 @@ public class ChatService {
     ChatMessageRepository chatMessageRepository;
 
     @Autowired
-    BlockedUserRepository blockedUserRepository;
+    BlockedUserRepository BlockedUserRepository;
 
     @Autowired
     ChatRoomHistoryRepository chatRoomHistoryRepository;
@@ -163,5 +163,11 @@ public class ChatService {
         msg.setOrigin("bluetooth");
 
         return chatMessageRepository.save(msg);
+    }
+    @Autowired
+    private BlockedUserRepository blockedUserRepository;
+
+    public void unblockUser(String blockerId, String blockedUserId) {
+        blockedUserRepository.deleteByBlockerIdAndBlockedUserId(blockerId, blockedUserId);
     }
 }

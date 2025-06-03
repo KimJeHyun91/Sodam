@@ -1,116 +1,253 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import '../chat/chat_service.dart';
+import '../utils/uuid_manager.dart';
 
-class ChatRoomPage extends StatelessWidget {
+class ChatRoomPage extends StatefulWidget {
   final String roomTitle;
+  final List<BluetoothCharacteristic>? writeChars;
+  final List<BluetoothCharacteristic>? notifyChars;
+  final int? roomId;
+  final String? targetUserId; // 차단 대상자 UUID
 
-  const ChatRoomPage({super.key, required this.roomTitle});
+  const ChatRoomPage({
+    super.key,
+    required this.roomTitle,
+    this.writeChars,
+    this.notifyChars,
+    this.roomId,
+    this.targetUserId,
+  });
+
+  @override
+  State<ChatRoomPage> createState() => _ChatRoomPageState();
+}
+
+class _ChatRoomPageState extends State<ChatRoomPage> {
+  final List<String> messages = [];
+  final TextEditingController controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _listenToBLE();
+  }
+
+  void _listenToBLE() async {
+    if (widget.notifyChars != null) {
+      for (var notifyChar in widget.notifyChars!) {
+        try {
+          await notifyChar.setNotifyValue(true);
+          notifyChar.onValueReceived.listen((data) {
+            _addMessage("[BLE] ${String.fromCharCodes(data)}");
+          });
+        } catch (e) {
+          _addMessage("[오류] BLE 수신 실패: $e");
+        }
+      }
+    }
+  }
+
+  void _addMessage(String msg) {
+    setState(() {
+      messages.add(msg);
+    });
+  }
+
+  Future<void> _sendMessage() async {
+    final text = controller.text.trim();
+    if (text.isEmpty) return;
+
+    if (widget.writeChars != null) {
+      for (var writeChar in widget.writeChars!) {
+        try {
+          await writeChar.write(text.codeUnits);
+        } catch (e) {
+          _addMessage("[오류] BLE 전송 실패: $e");
+        }
+      }
+      _addMessage("[나-BLE] $text");
+    }
+
+    await _sendOverNetwork(text);
+    controller.clear();
+  }
+
+  Future<void> _sendOverNetwork(String text) async {
+    if (widget.roomId != null) {
+      final senderId = await UUIDManager.getOrCreateUUID();
+      final uuid = DateTime.now().millisecondsSinceEpoch.toString();
+
+      await ChatService.syncBleMessageToServer(
+        roomId: widget.roomId!,
+        message: text,
+        uuid: uuid,
+        senderId: senderId,
+        sentAt: DateTime.now().toIso8601String(),
+      );
+      _addMessage("[나-서버] $text");
+    } else {
+      _addMessage("[오류] roomId 없음 - 서버 전송 실패");
+    }
+  }
+
+  Future<void> _blockUser() async {
+    if (widget.targetUserId == null) {
+      _addMessage("⚠️ 차단 대상이 없습니다.");
+      return;
+    }
+
+    final blockerId = await UUIDManager.getOrCreateUUID();
+
+    final result = await ChatService.blockUser(
+      blockerId: blockerId,
+      blockedUserId: widget.targetUserId!,
+    );
+
+    if (result) {
+      _addMessage("🚫 상대방을 차단했습니다.");
+    } else {
+      _addMessage("⚠️ 차단 실패");
+    }
+  }
+
+  Future<void> _unblockUser() async {
+    if (widget.targetUserId == null) {
+      _addMessage("⚠️ 차단 대상이 없습니다.");
+      return;
+    }
+
+    final blockerId = await UUIDManager.getOrCreateUUID();
+
+    final result = await ChatService.unblockUser(
+      blockerId: blockerId,
+      blockedUserId: widget.targetUserId!,
+    );
+
+    if (result) {
+      _addMessage("✅ 차단 해제했습니다.");
+    } else {
+      _addMessage("⚠️ 차단 해제 실패");
+    }
+  }
+
+  void _showBlockDialog() async {
+    if (widget.targetUserId == null) {
+      _addMessage("⚠️ 차단 대상이 없습니다.");
+      return;
+    }
+
+    final blockerId = await UUIDManager.getOrCreateUUID();
+    final isBlocked = await ChatService.isBlocked(
+      blockerId: blockerId,
+      blockedUserId: widget.targetUserId!,
+    );
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("차단/해제"),
+          content: Text("이 사용자에 대해 어떤 작업을 수행하시겠습니까?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("취소"),
+            ),
+            if (!isBlocked)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _blockUser();
+                },
+                child: Text("차단", style: TextStyle(color: Colors.red)),
+              ),
+            if (isBlocked)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _unblockUser();
+                },
+                child: Text("차단 해제"),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    if (widget.notifyChars != null) {
+      for (var notifyChar in widget.notifyChars!) {
+        notifyChar.setNotifyValue(false);
+      }
+    }
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('$roomTitle 단톡방'),
+        title: Text(widget.roomTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: () {
-              // TODO: 참여자 추가 기능
-            },
-          )
+            icon: const Icon(Icons.block),
+            onPressed: _showBlockDialog,
+          ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: const [
-                _ChatBubble(isMe: false, message: '안녕!'),
-                _ChatBubble(isMe: true, message: '안녕하세요!'),
-                _ChatBubble(isMe: true, message: '', isImage: true),
-              ],
-            ),
-          ),
-          const _ChatInputField(),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChatBubble extends StatelessWidget {
-  final bool isMe;
-  final String message;
-  final bool isImage;
-
-  const _ChatBubble({
-    required this.isMe,
-    required this.message,
-    this.isImage = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isMe)
-            const CircleAvatar(radius: 14, backgroundColor: Colors.grey),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: isMe ? Colors.lightBlue.shade200 : Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: isImage
-                ? Container(
-              width: 100,
-              height: 80,
-              color: Colors.blue[100],
-            )
-                : Text(message),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChatInputField extends StatelessWidget {
-  const _ChatInputField();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: '메시지 입력',
-                border: InputBorder.none,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: messages.length,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Align(
+                  alignment: messages[index].contains("나")
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: messages[index].contains("나")
+                          ? Colors.lightBlueAccent.withOpacity(0.4)
+                          : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(messages[index]),
+                  ),
+                ),
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: () {
-              // TODO: 메시지 전송 로직
-            },
-          )
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: '메시지를 입력하세요',
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'chat_room_model.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import '../chat/chat_room_model.dart';
 
 class RoomCreateSheet extends StatefulWidget {
-  const RoomCreateSheet({super.key});
+  final List<BluetoothDevice> bleUsers;
+
+  const RoomCreateSheet({super.key, required this.bleUsers});
 
   @override
   State<RoomCreateSheet> createState() => _RoomCreateSheetState();
@@ -11,8 +14,7 @@ class RoomCreateSheet extends StatefulWidget {
 class _RoomCreateSheetState extends State<RoomCreateSheet> {
   final _titleController = TextEditingController();
   final _passwordController = TextEditingController();
-  final List<String> _neighbors = ['김제현', '이하늘'];
-  final Set<String> _selected = {};
+  final Set<BluetoothDevice> _selected = {};
   bool _isSecret = false;
 
   @override
@@ -32,37 +34,43 @@ class _RoomCreateSheetState extends State<RoomCreateSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('방만들기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            const Text('방 만들기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
             const SizedBox(height: 16),
             const Text('방 제목'),
             TextField(controller: _titleController),
             const SizedBox(height: 16),
-            const Text('이웃'),
-            ..._neighbors.map((name) {
-              return ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(name),
-                trailing: Checkbox(
-                  value: _selected.contains(name),
-                  onChanged: (val) {
-                    setState(() {
-                      if (val == true) {
-                        _selected.add(name);
-                      } else {
-                        _selected.remove(name);
-                      }
-                    });
-                  },
-                ),
-              );
-            }),
+            const Text('근처 BLE 사용자'),
+            Expanded(
+              child: ListView(
+                children: widget.bleUsers.map((device) {
+                  final isSelected = _selected.contains(device);
+                  return ListTile(
+                    leading: const CircleAvatar(child: Icon(Icons.bluetooth)),
+                    title: Text(device.name.isNotEmpty ? device.name : '(알 수 없음)'),
+                    subtitle: Text(device.id.toString()),
+                    trailing: Checkbox(
+                      value: isSelected,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            _selected.add(device);
+                          } else {
+                            _selected.remove(device);
+                          }
+                        });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
             Row(
               children: [
                 Checkbox(
                   value: _isSecret,
                   onChanged: (val) => setState(() => _isSecret = val ?? false),
                 ),
-                const Text('비밀'),
+                const Text('비밀방'),
               ],
             ),
             if (_isSecret)
@@ -84,12 +92,9 @@ class _RoomCreateSheetState extends State<RoomCreateSheet> {
                   );
                   Navigator.pop(context, newRoom);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC9DAB2),
-                ),
-                child: const Text('만들기'),
+                child: const Text('방 만들기'),
               ),
-            )
+            ),
           ],
         ),
       ),
