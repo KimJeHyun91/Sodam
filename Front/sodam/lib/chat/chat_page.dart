@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../chat/chat_room_model.dart';
 import '../components/bottom_nav.dart';
 import 'room_create_sheet.dart';
@@ -15,6 +16,39 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   List<ChatRoomModel> customRooms = [];
   List<BluetoothDevice> bleUsers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
+    _loadBLEUsers();
+  }
+
+  Future<void> _requestPermissions() async {
+    await [
+      Permission.bluetooth,
+      Permission.bluetoothConnect,
+      Permission.bluetoothScan,
+      Permission.bluetoothAdvertise,
+      Permission.locationWhenInUse,
+    ].request();
+  }
+
+  void _loadBLEUsers() {
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+    FlutterBluePlus.scanResults.listen((results) {
+      for (var r in results) {
+        final isAppUser = r.advertisementData.manufacturerData.values.any(
+              (data) => String.fromCharCodes(data).contains("BLE_1to1_CHAT"),
+        );
+        if (isAppUser && !bleUsers.any((d) => d.id == r.device.id)) {
+          setState(() {
+            bleUsers.add(r.device);
+          });
+        }
+      }
+    });
+  }
 
   void _openRoomCreateSheet() async {
     final result = await showModalBottomSheet<ChatRoomModel>(
@@ -33,40 +67,62 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadBLEUsers();
-  }
+  Future<void> _openChatRoomWithConnection(BluetoothDevice device) async {
+    try {
+      await device.connect(autoConnect: false);
+      final services = await device.discoverServices();
 
-  void _loadBLEUsers() async {
-    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
-    FlutterBluePlus.scanResults.listen((results) {
-      for (var r in results) {
-        final isAppUser = r.advertisementData.manufacturerData.values.any(
-              (data) => String.fromCharCodes(data).contains("BLE_1to1_CHAT"),
-        );
-        if (isAppUser && !bleUsers.any((d) => d.id == r.device.id)) {
-          setState(() {
-            bleUsers.add(r.device);
-          });
+      BluetoothCharacteristic? writeChar;
+      BluetoothCharacteristic? notifyChar;
+
+      for (var service in services) {
+        for (var char in service.characteristics) {
+          if (char.properties.write && writeChar == null) writeChar = char;
+          if (char.properties.notify && notifyChar == null) notifyChar = char;
         }
       }
-    });
+
+      if (writeChar != null && notifyChar != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatRoomPage(
+              roomTitle: device.name.isNotEmpty ? device.name : '(이름 없음)',
+              writeChars: [writeChar!],
+              notifyChars: [notifyChar!],
+            ),
+          ),
+        );
+      } else {
+        _showError("⚠️ 사용 가능한 BLE 특성을 찾지 못했습니다.");
+      }
+    } catch (e) {
+      _showError("연결 실패: $e");
+    }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-
       body: ListView(
-
         padding: const EdgeInsets.all(16),
         children: [
           const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
-          _neighborList(context),
+          ...bleUsers.map((device) {
+            final name = device.name.isNotEmpty ? device.name : '(이름 없음)';
+            return ListTile(
+              leading: const CircleAvatar(child: Icon(Icons.person)),
+              title: Text(name),
+              subtitle: Text(device.id.toString()),
+              onTap: () => _openChatRoomWithConnection(device),
+            );
+          }),
 
           const SizedBox(height: 24),
           const Text('열린마당', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -88,46 +144,18 @@ class _ChatPageState extends State<ChatPage> {
           _secretChatList(context, customRooms),
         ],
       ),
-      ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );
   }
 }
 
-Widget _neighborList(BuildContext context) {
-  return Column(
-    children: [
-      _neighborItem(context, '김제현', 'kjh910920'),
-      _neighborItem(context, '이하늘', 'harull817@gmail.com'),
-      _neighborItem(context, '정용태', 'grand7246@gmail.com'),
-    ],
-  );
-}
-
-Widget _neighborItem(BuildContext context, String name, String id, {String? image}) {
-  return ListTile(
-    leading: CircleAvatar(
-      backgroundImage: image != null ? AssetImage(image) : null,
-      child: image == null ? const Icon(Icons.person) : null,
-    ),
-    title: Text(name),
-    subtitle: Text(id),
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatRoomPage(roomTitle: name),
-        ),
-      );
-    },
-  );
-}
+// -------------------------- 기타 방 UI -------------------------
 
 Widget _openChatList(BuildContext context) {
   return Column(
     children: [
       _chatRoomItem(context, '소담마당', '카톡이 먹통이네요', color: Colors.green),
-      _chatRoomItem(context, '4조', '다들 점심 뭐 먹을래여  ', color: Colors.yellow, isLocked: true),
+      _chatRoomItem(context, '4조', '다들 점심 뭐 먹을래여', color: Colors.yellow, isLocked: true),
     ],
   );
 }

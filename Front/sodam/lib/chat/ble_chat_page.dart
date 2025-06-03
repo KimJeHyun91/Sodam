@@ -24,7 +24,7 @@ class _BleChatPageState extends State<BleChatPage> {
     await [
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
-      Permission.locationWhenInUse
+      Permission.locationWhenInUse,
     ].request();
 
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
@@ -37,8 +37,35 @@ class _BleChatPageState extends State<BleChatPage> {
     });
   }
 
-  void _startChat() {
+  Future<void> _startChat() async {
     if (selectedDevices.isEmpty) return;
+
+    List<BluetoothCharacteristic> writeChars = [];
+    List<BluetoothCharacteristic> notifyChars = [];
+
+    for (var device in selectedDevices) {
+      try {
+        var state = await device.state.first;
+        if (state != BluetoothDeviceState.connected) {
+          await device.connect(autoConnect: false);
+        }
+
+        List<BluetoothService> services = await device.discoverServices();
+
+        for (var service in services) {
+          for (var char in service.characteristics) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              writeChars.add(char);
+            }
+            if (char.properties.notify) {
+              notifyChars.add(char);
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ BLE 연결 실패: $e');
+      }
+    }
 
     Navigator.push(
       context,
@@ -47,8 +74,8 @@ class _BleChatPageState extends State<BleChatPage> {
           roomTitle: selectedDevices.length == 1
               ? selectedDevices.first.name
               : '단톡방 (${selectedDevices.length}명)',
-          writeChar: null,
-          notifyChar: null,
+          writeChars: writeChars.isNotEmpty ? writeChars : null,
+          notifyChars: notifyChars.isNotEmpty ? notifyChars : null,
         ),
       ),
     );
@@ -77,7 +104,7 @@ class _BleChatPageState extends State<BleChatPage> {
                   subtitle: Text(device.id.toString()),
                   trailing: Checkbox(
                     value: selected,
-                    onChanged: (bool? val) {
+                    onChanged: (val) {
                       setState(() {
                         if (val == true) {
                           selectedDevices.add(device);
