@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../dio_client.dart';
@@ -33,7 +32,7 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
 
       final historyRes = await DioClient.dio.get(
         '/point/get_history_point_no_list',
-        queryParameters: {'point_no': pointNo},
+        queryParameters: {'id': id}, // ✅ pointNo 아님!
       );
 
       final List<dynamic> data = historyRes.data;
@@ -51,11 +50,26 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
     }
   }
 
+  String _mapReasonCodeToDescription(String code) {
+    switch (code) {
+      case 'BUY':
+        return '상점 물품 구매';
+      case 'attendence':
+        return '출석 보상';
+      case 'REWARD':
+        return '미션 보상';
+      case 'REFUND':
+        return '환불';
+      default:
+        return '기타';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("포인트 사용내역"),
+        title: const Text("화폐 내역"),
         elevation: 0,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
@@ -72,17 +86,41 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
           final date = DateTime.parse(history['date']);
           final reason = history['reason'];
 
-          return ListTile(
-            leading: Icon(isPlus ? Icons.add_circle : Icons.remove_circle,
-                color: isPlus ? Colors.green : Colors.red),
-            title: Text(reason),
-            subtitle: Text("${date.year}.${date.month}.${date.day}"),
-            trailing: Text(
-              "${isPlus ? '+' : '-'}$amount 냥",
-              style: TextStyle(
-                color: isPlus ? Colors.green : Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // 내용 + 금액
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _mapReasonCodeToDescription(reason),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "${isPlus ? '+' : '-'}$amount 냥",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: isPlus ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           );
         },
@@ -90,3 +128,4 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
     );
   }
 }
+

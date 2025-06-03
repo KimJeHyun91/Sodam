@@ -50,9 +50,16 @@ public class RewardController {
 		return 1201;
 	}
 	
+//	@GetMapping("/get_user_reward_item_list")
+//	public List<UserRewardItemDomain> get_user_reward_item_list(){
+//		return user_reward_item_service.get_user_reward_item_list();
+//	}
 	@GetMapping("/get_user_reward_item_list")
-	public List<UserRewardItemDomain> get_user_reward_item_list(){
-		return user_reward_item_service.get_user_reward_item_list();
+	public List<UserRewardItemDomain> get_user_reward_item_list(@RequestParam("id") String id){
+	    if (id == null || id.isEmpty()) {
+	        return List.of(); // 빈 리스트 반환
+	    }
+	    return user_reward_item_service.get_user_reward_item_id_list(id);
 	}
 	
 	@GetMapping("/get_user_reward_item_id_list")
