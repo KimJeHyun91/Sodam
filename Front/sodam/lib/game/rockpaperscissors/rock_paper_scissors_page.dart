@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../../api/point_api.dart';
+
 class RockPaperScissorsPage extends StatefulWidget {
   final String myNickname;
   final String opponentNickname;
@@ -168,8 +170,11 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
 
   void showFinalResult() {
     String finalMessage;
+    final isMyWin = myScore > opponentScore;
+
     if (myScore > opponentScore) {
-      finalMessage = '${widget.myNickname} 승리! 🎉 엽전 1개 획득';
+      finalMessage = '${widget.myNickname} 승리! 🎉 엽전 50냥 획득';
+      giveReward(50, reasonCode: 'RPS_WIN'); // ✅ 변경된 함수 사용
     } else if (myScore < opponentScore) {
       finalMessage = '${widget.opponentNickname} 승리! ❌ 엽전 획득 실패';
     } else {
@@ -180,9 +185,7 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Center(
-          child: Text(
-            '최종 결과',
+        title: const Center(child: Text('최종 결과',
             textAlign: TextAlign.center,
           ),
         ),

@@ -103,7 +103,7 @@ Widget _openChatList(BuildContext context) {
   return Column(
     children: [
       _chatRoomItem(context, '소담마당', '카톡이 먹통이네요', color: Colors.green),
-      _chatRoomItem(context, '4조', '다들 점심 뭐 먹을래여', color: Colors.yellow, isLocked: true),
+      _chatRoomItem(context, '4조', '다들 점심 뭐 먹을래여', color: Colors.yellow),
     ],
   );
 }
@@ -122,7 +122,6 @@ Widget _secretChatList(BuildContext context, List<ChatRoomModel> customRooms) {
         '4조',
         '다들 점심 뭐 먹을래여',
         color: Colors.yellow,
-        isLocked: true,
       ),
       const SizedBox(height: 16),
       if (customRooms.isNotEmpty)
@@ -132,7 +131,6 @@ Widget _secretChatList(BuildContext context, List<ChatRoomModel> customRooms) {
           context,
           room.title,
           '신규방',
-          isLocked: room.isSecret,
         ),
       )
     ],
@@ -140,7 +138,7 @@ Widget _secretChatList(BuildContext context, List<ChatRoomModel> customRooms) {
 }
 
 Widget _chatRoomItem(BuildContext context, String name, String message,
-    {Color? color, bool isLocked = false, String? image}) {
+    {Color? color, String? image}) {
   return ListTile(
     leading: CircleAvatar(
       backgroundColor: color,
@@ -149,7 +147,6 @@ Widget _chatRoomItem(BuildContext context, String name, String message,
     ),
     title: Text(name),
     subtitle: Text(message),
-    trailing: isLocked ? const Icon(Icons.lock_outline) : null,
     onTap: () {
       Navigator.push(
         context,
