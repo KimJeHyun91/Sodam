@@ -1,11 +1,9 @@
-import 'dart:async';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_ble_peripheral/flutter_ble_peripheral.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../chat/chat_room_page.dart';
+import 'dart:typed_data';
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({super.key});
@@ -19,7 +17,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
   List<BluetoothDevice> devices = [];
   Set<BluetoothDevice> selectedDevices = {};
   bool isAdvertising = false;
-  StreamSubscription<List<ScanResult>>? _scanSubscription;
 
   @override
   void initState() {
@@ -28,6 +25,12 @@ class _BluetoothPageState extends State<BluetoothPage> {
   }
 
   Future<void> _startBluetoothFlow() async {
+    await _requestPermissions();
+    _startAdvertising();
+    _startScanning();
+  }
+
+  Future<void> _requestPermissions() async {
     await [
       Permission.bluetooth,
       Permission.bluetoothConnect,
@@ -37,25 +40,11 @@ class _BluetoothPageState extends State<BluetoothPage> {
     ].request();
   }
 
-  Future<void> _startChat() async {
-    if (selectedDevices.isEmpty) {
-      await _startAsPriority();
-      _showError("방장이 되었습니다. 다른 기기가 연결하길 기다립니다.");
-    } else {
-      await _startAsSecondary();
-      if (selectedDevices.length == 1) {
-        await _connectToSingleDevice(selectedDevices.first);
-      } else {
-        await _connectToGroupDevices();
-      }
-    }
-  }
-
-  Future<void> _startAsPriority() async {
+  void _startAdvertising() async {
     final advertiseData = AdvertiseData(
       includeDeviceName: true,
       manufacturerId: 1234,
-      manufacturerData: Uint8List.fromList([0x50, 0x52, 0x49, 0x4F]),
+      manufacturerData: Uint8List.fromList("BLE_1to1_CHAT".codeUnits),
       serviceUuid: "12345678-1234-5678-1234-56789abcdef0",
     );
 
@@ -65,32 +54,38 @@ class _BluetoothPageState extends State<BluetoothPage> {
     });
   }
 
-  Future<void> _startAsSecondary() async {
-    FlutterBluePlus.startScan(
-      withServices: [Guid("12345678-1234-5678-1234-56789abcdef0")],
-      timeout: const Duration(seconds: 12),
-    );
-
-    _scanSubscription?.cancel();
-    _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+  void _startScanning() {
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
+    FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
-        if (!devices.any((d) => d.id == r.device.id)) {
+        final isAppUser = r.advertisementData.manufacturerData.values.any(
+              (data) => String.fromCharCodes(data).contains("BLE_1to1_CHAT"),
+        );
+
+        if (isAppUser && !devices.any((d) => d.id == r.device.id)) {
+          debugPrint("✅ BLE 사용자 발견: ${r.device.name} (${r.device.id})");
           setState(() {
             devices.add(r.device);
           });
         }
       }
     });
+  }
 
-    await Future.delayed(const Duration(seconds: 12));
-    await FlutterBluePlus.stopScan();
-    await _scanSubscription?.cancel();
+  Future<void> _startChat() async {
+    if (selectedDevices.isEmpty) return;
+
+    if (selectedDevices.length == 1) {
+      await _connectToSingleDevice(selectedDevices.first);
+    } else {
+      await _connectToGroupDevices();
+    }
   }
 
   Future<void> _connectToSingleDevice(BluetoothDevice device) async {
     try {
       await device.connect();
-      final services = await device.discoverServices();
+      List<BluetoothService> services = await device.discoverServices();
       BluetoothCharacteristic? writeChar;
       BluetoothCharacteristic? notifyChar;
 
@@ -127,7 +122,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
     for (var device in selectedDevices) {
       try {
         await device.connect();
-        final services = await device.discoverServices();
+        var services = await device.discoverServices();
         for (var service in services) {
           for (var c in service.characteristics) {
             if (c.properties.write) writeChars.add(c);
@@ -156,27 +151,28 @@ class _BluetoothPageState extends State<BluetoothPage> {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   @override
   void dispose() {
     FlutterBluePlus.stopScan();
     blePeripheral.stop();
-    _scanSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bluetooth 사용자 목록')),
+      appBar: AppBar(title: const Text('BLE 사용자 목록')),
       body: Column(
         children: [
           if (isAdvertising)
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text("방장: 광고 중입니다", style: TextStyle(color: Colors.green)),
+              child: Text("📢 광고 중입니다...", style: TextStyle(color: Colors.green)),
             ),
           Expanded(
             child: RefreshIndicator(
@@ -185,6 +181,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
                   devices.clear();
                   selectedDevices.clear();
                 });
+                _startScanning();
               },
               child: ListView.builder(
                 itemCount: devices.length,
@@ -211,14 +208,12 @@ class _BluetoothPageState extends State<BluetoothPage> {
               ),
             ),
           ),
-          if (selectedDevices.isNotEmpty || !isAdvertising)
+          if (selectedDevices.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: _startChat,
-                child: Text(
-                  selectedDevices.isEmpty ? "단톡방 만들기" : selectedDevices.length == 1 ? "1:1 채팅 시작" : "단톡방 참가",
-                ),
+                child: Text(selectedDevices.length == 1 ? "1:1 채팅 시작" : "단톡방 만들기"),
               ),
             ),
         ],

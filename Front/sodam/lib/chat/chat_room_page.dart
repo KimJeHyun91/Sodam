@@ -8,7 +8,7 @@ class ChatRoomPage extends StatefulWidget {
   final List<BluetoothCharacteristic>? writeChars;
   final List<BluetoothCharacteristic>? notifyChars;
   final int? roomId;
-  final String? targetUserId; // 상대 UUID
+  final String? targetUserId; // 차단 대상자 UUID
 
   const ChatRoomPage({
     super.key,
@@ -26,19 +26,11 @@ class ChatRoomPage extends StatefulWidget {
 class _ChatRoomPageState extends State<ChatRoomPage> {
   final List<String> messages = [];
   final TextEditingController controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-
-  bool isBlocked = false;
-  String? blockerId;
 
   @override
   void initState() {
     super.initState();
     _listenToBLE();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initBlockState();
-    });
   }
 
   void _listenToBLE() async {
@@ -59,16 +51,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _addMessage(String msg) {
     setState(() {
       messages.add(msg);
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
     });
   }
 
@@ -109,47 +91,91 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     }
   }
 
-  Future<void> _initBlockState() async {
-    blockerId = await UUIDManager.getOrCreateUUID();
-    if (widget.targetUserId != null) {
-      final result = await ChatService.isBlocked(
-        blockerId: blockerId!,
-        blockedUserId: widget.targetUserId!,
-      );
-      setState(() {
-        isBlocked = result;
-      });
+  Future<void> _blockUser() async {
+    if (widget.targetUserId == null) {
+      _addMessage("⚠️ 차단 대상이 없습니다.");
+      return;
+    }
+
+    final blockerId = await UUIDManager.getOrCreateUUID();
+
+    final result = await ChatService.blockUser(
+      blockerId: blockerId,
+      blockedUserId: widget.targetUserId!,
+    );
+
+    if (result) {
+      _addMessage("🚫 상대방을 차단했습니다.");
+    } else {
+      _addMessage("⚠️ 차단 실패");
     }
   }
 
-  Future<void> _toggleBlock() async {
-    print("🛑 차단 버튼 눌림 / 현재 상태: $isBlocked");
-
-    if (widget.targetUserId == null || blockerId == null) return;
-
-    bool result = false;
-
-    if (isBlocked) {
-      result = await ChatService.unblockUser(
-        blockerId: blockerId!,
-        blockedUserId: widget.targetUserId!,
-      );
-      if (result) _addMessage("✅ 차단 해제했습니다.");
-    } else {
-      result = await ChatService.blockUser(
-        blockerId: blockerId!,
-        blockedUserId: widget.targetUserId!,
-      );
-      if (result) _addMessage("🚫 상대방을 차단했습니다.");
+  Future<void> _unblockUser() async {
+    if (widget.targetUserId == null) {
+      _addMessage("⚠️ 차단 대상이 없습니다.");
+      return;
     }
+
+    final blockerId = await UUIDManager.getOrCreateUUID();
+
+    final result = await ChatService.unblockUser(
+      blockerId: blockerId,
+      blockedUserId: widget.targetUserId!,
+    );
 
     if (result) {
-      setState(() {
-        isBlocked = !isBlocked;
-      });
+      _addMessage("✅ 차단 해제했습니다.");
     } else {
-      _addMessage("⚠️ ${isBlocked ? '차단 해제 실패' : '차단 실패'}");
+      _addMessage("⚠️ 차단 해제 실패");
     }
+  }
+
+  void _showBlockDialog() async {
+    if (widget.targetUserId == null) {
+      _addMessage("⚠️ 차단 대상이 없습니다.");
+      return;
+    }
+
+    final blockerId = await UUIDManager.getOrCreateUUID();
+    final isBlocked = await ChatService.isBlocked(
+      blockerId: blockerId,
+      blockedUserId: widget.targetUserId!,
+    );
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("차단/해제"),
+          content: Text("이 사용자에 대해 어떤 작업을 수행하시겠습니까?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("취소"),
+            ),
+            if (!isBlocked)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _blockUser();
+                },
+                child: Text("차단", style: TextStyle(color: Colors.red)),
+              ),
+            if (isBlocked)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _unblockUser();
+                },
+                child: Text("차단 해제"),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -160,7 +186,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       }
     }
     controller.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -171,9 +196,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         title: Text(widget.roomTitle),
         actions: [
           IconButton(
-            icon: Icon(isBlocked ? Icons.lock_open : Icons.block),
-            tooltip: isBlocked ? "차단 해제" : "차단",
-            onPressed: _toggleBlock,
+            icon: const Icon(Icons.block),
+            onPressed: _showBlockDialog,
           ),
         ],
       ),
@@ -181,7 +205,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         children: [
           Expanded(
             child: ListView.builder(
-              controller: _scrollController,
               padding: const EdgeInsets.all(8),
               itemCount: messages.length,
               itemBuilder: (context, index) => Padding(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'chat_room_model.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import '../chat/chat_room_model.dart';
 import '../components/bottom_nav.dart';
 import 'room_create_sheet.dart';
 import 'chat_room_page.dart';
@@ -13,6 +14,7 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   List<ChatRoomModel> customRooms = [];
+  List<BluetoothDevice> bleUsers = [];
 
   void _openRoomCreateSheet() async {
     final result = await showModalBottomSheet<ChatRoomModel>(
@@ -21,7 +23,7 @@ class _ChatPageState extends State<ChatPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => const RoomCreateSheet(),
+      builder: (_) => RoomCreateSheet(bleUsers: bleUsers),
     );
 
     if (result != null) {
@@ -29,6 +31,28 @@ class _ChatPageState extends State<ChatPage> {
         customRooms.add(result);
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBLEUsers();
+  }
+
+  void _loadBLEUsers() async {
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+    FlutterBluePlus.scanResults.listen((results) {
+      for (var r in results) {
+        final isAppUser = r.advertisementData.manufacturerData.values.any(
+              (data) => String.fromCharCodes(data).contains("BLE_1to1_CHAT"),
+        );
+        if (isAppUser && !bleUsers.any((d) => d.id == r.device.id)) {
+          setState(() {
+            bleUsers.add(r.device);
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -43,13 +67,11 @@ class _ChatPageState extends State<ChatPage> {
           _neighborList(context),
 
           const SizedBox(height: 24),
-
           const Text('열린마당', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
           _openChatList(context),
 
           const SizedBox(height: 24),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -102,7 +124,7 @@ Widget _openChatList(BuildContext context) {
   return Column(
     children: [
       _chatRoomItem(context, '소담마당', '카톡이 먹통이네요', color: Colors.green),
-      _chatRoomItem(context, '4조', '다들 점심 뭐 먹을래여', color: Colors.yellow, isLocked: true),
+      _chatRoomItem(context, '4조', '다들 점심 뭐 먹을래여  ', color: Colors.yellow, isLocked: true),
     ],
   );
 }
