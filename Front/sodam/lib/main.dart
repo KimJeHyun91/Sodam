@@ -13,6 +13,7 @@
 //   ));
 // }
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'intro_page.dart';
 import 'main_page.dart';
@@ -88,6 +89,15 @@ class _MyAppState extends State<MyApp> {
         fontFamily: 'EBSHunminjeongeum',
         brightness: Brightness.dark,
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+      ],
+      locale: const Locale('ko', 'KR'),
       home: _initialScreen, // ✅ 여기서 조건 분기된 화면을 보여줌
     );
   }

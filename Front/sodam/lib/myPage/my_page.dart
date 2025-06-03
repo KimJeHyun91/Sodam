@@ -24,6 +24,7 @@ class _MyPageState extends State<MyPage> {
 
   String? selectedTitle;
   String? selectedIcon;
+  String? selectedFrame;
 
   int _walletPoint = 0;
 
@@ -58,32 +59,6 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
-  // Future<void> fetchAttendanceDates(String id) async {
-  //   try {
-  //     final response = await DioClient.dio.get(
-  //       '/point/get_history_list',
-  //       queryParameters: {'id': id},
-  //     );
-  //
-  //     if (response.data is List) {
-  //       final List<dynamic> data = response.data;
-  //       final Set<DateTime> result = {};
-  //
-  //       for (final item in data) {
-  //         if (item['point_change_reason_code'] == 'attendence') {
-  //           final created = DateTime.parse(item['created_date']);
-  //           result.add(DateTime(created.year, created.month, created.day)); // 시분초 제거
-  //         }
-  //       }
-  //
-  //       setState(() {
-  //         _attendedDates = result;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print("출석 데이터 불러오기 실패: $e");
-  //   }
-  // }
   Future<void> fetchAttendanceDates(String id) async {
     try {
       // 1. 유저의 point_no 가져오기
@@ -116,11 +91,6 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   fetchData();
-  // }
   @override
   void initState() {
     super.initState();
@@ -133,7 +103,7 @@ class _MyPageState extends State<MyPage> {
           userId: id,
           onPointUpdate: (newPoint) {
             setState(() {
-              _walletPoint = newPoint; // 지갑 실시간 반영!
+              _walletPoint = newPoint;
             });
           },
         );
@@ -201,7 +171,8 @@ class _MyPageState extends State<MyPage> {
 
       final titleKey = 'selectedTitle_$id';
       final iconKey = 'selectedIcon_$id';
-
+      final frameKey = 'selectedFrame_$id';
+      print('🔍 프레임 경로: $selectedFrame');
       final attended = await fetchAttendanceStatus(id!);
 
       setState(() {
@@ -212,6 +183,7 @@ class _MyPageState extends State<MyPage> {
             : 0;
         selectedTitle = prefs.getString(titleKey);
         selectedIcon = prefs.getString(iconKey);
+        selectedFrame = prefs.getString(frameKey);
         isLoading = false;
         _isAttendedToday = attended;
       });
@@ -262,9 +234,20 @@ class _MyPageState extends State<MyPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const CircleAvatar(
-                            radius: 100,
-                            backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              if (selectedFrame != null && selectedFrame!.isNotEmpty)
+                                Image.asset(
+                                  selectedFrame!,
+                                  width: 220,
+                                  height: 220,
+                                ),
+                              const CircleAvatar(
+                                radius: 100,
+                                backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                           if (selectedTitle != null)
@@ -406,10 +389,13 @@ class _MyPageState extends State<MyPage> {
           SizedBox(
             height: 420, // 월 전체 달력 보이게
             child: TableCalendar(
+              locale: 'ko_KR',
               firstDay: DateTime.utc(2025, 1, 1),
               lastDay: DateTime.utc(2030, 12, 31),
               focusedDay: DateTime.now(),
               calendarFormat: CalendarFormat.month,
+              rowHeight: 55,
+              daysOfWeekHeight: 32,
               startingDayOfWeek: StartingDayOfWeek.sunday,
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
