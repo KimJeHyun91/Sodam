@@ -246,9 +246,12 @@ public class PointController {
 		) {
 			return 1900;
 		}
+
 		if(!(point_history_dto.getPoint_plus_minus().equals('P')||point_history_dto.getPoint_plus_minus().equals('M'))) {
 			return 1162;
 		}
+		
+
 		List<PointChangeReasonDomain> result_list=point_change_reason_service.get_change_reason_list();
 		if(result_list.size()>0) {
 			boolean temp_flag=false;
@@ -265,10 +268,14 @@ public class PointController {
 		int point_flag=0;
 		int point_history_flag=0;
 		
+		System.out.println("sdfsdfsd아아아아ㅏ3" + point_history_dto.getPoint_no());
+
 		// 엽전 수정
 		Optional<PointDomain> result_point_optional=point_service.get_info_object(point_history_dto.getPoint_no());
 		if(result_point_optional.isPresent()) {
-			PointDomain point_domain=new PointDomain();
+			
+			PointDomain point_domain=result_point_optional.get();
+			
 			point_domain.setPoint_no(point_history_dto.getPoint_no());
 			if(point_history_dto.getPoint_plus_minus().equals('P')) {
 				point_domain.setCurrent_point(point_domain.getCurrent_point()+point_history_dto.getChange_amount());
@@ -278,6 +285,7 @@ public class PointController {
 				}
 				point_domain.setCurrent_point(point_domain.getCurrent_point()-point_history_dto.getChange_amount());
 			}
+
 			PointDomain result_point=point_service.update(point_domain);		
 			if(result_point!=null) {
 				point_flag=1;
