@@ -63,7 +63,7 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("포인트 사용내역"),
+        title: const Text("화폐 사용내역"),
         elevation: 0,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,

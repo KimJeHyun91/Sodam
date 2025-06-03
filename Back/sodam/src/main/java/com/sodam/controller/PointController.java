@@ -35,6 +35,8 @@ public class PointController {
 	PointHistoryService point_history_service;
 	@Autowired
 	PointChangeReasonService point_change_reason_service;
+	@Autowired
+	PointSocketController pointSocketController; //웹소켓땜 넣
 	
 	@GetMapping("/get_info_object")
 	public PointDomain get_info_object(@RequestParam("point_no") Long point_no) {
@@ -322,6 +324,15 @@ public class PointController {
 		if(!result_flag.equals("11")) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return Integer.parseInt(result_flag);
+		}
+		
+		Optional<PointDomain> updatedPointOpt = point_service.get_info_object(point_history_dto.getPoint_no());
+		if (updatedPointOpt.isPresent()) {
+		    PointDomain updatedPoint = updatedPointOpt.get();
+		    pointSocketController.sendPointUpdate(
+		    	updatedPoint.getId(),
+		    	updatedPoint.getCurrent_point().intValue()
+		    );
 		}
 		
 		return Integer.parseInt(result_flag); 
