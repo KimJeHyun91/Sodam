@@ -26,9 +26,11 @@ class _MyPageState extends State<MyPage> {
   String? selectedIcon;
 
   int _walletPoint = 0;
-  Set<DateTime> _attendedDates = {};
 
-  Future<void> fetchAttendanceDates(String id) async {
+  Set<DateTime> _attendedDates = {};
+  bool _isAttendedToday = false;
+
+  Future<bool> fetchAttendanceStatus(String id) async {
     try {
       final response = await DioClient.dio.get(
         '/point/get_history_list',
@@ -37,6 +39,65 @@ class _MyPageState extends State<MyPage> {
 
       if (response.data is List) {
         final List<dynamic> data = response.data;
+        final today = DateTime.now();
+        final todayKey = DateTime(today.year, today.month, today.day);
+
+        for (final item in data) {
+          if (item['point_change_reason_code'] == 'attendence') {
+            final created = DateTime.parse(item['created_date']);
+            final createdKey = DateTime(created.year, created.month, created.day);
+
+            if (createdKey == todayKey) return true; // 오늘 출석함
+          }
+        }
+      }
+      return false; // 오늘 출석 안함
+    } catch (e) {
+      print("🔥 출석 여부 확인 실패: $e");
+      return false;
+    }
+  }
+
+  // Future<void> fetchAttendanceDates(String id) async {
+  //   try {
+  //     final response = await DioClient.dio.get(
+  //       '/point/get_history_list',
+  //       queryParameters: {'id': id},
+  //     );
+  //
+  //     if (response.data is List) {
+  //       final List<dynamic> data = response.data;
+  //       final Set<DateTime> result = {};
+  //
+  //       for (final item in data) {
+  //         if (item['point_change_reason_code'] == 'attendence') {
+  //           final created = DateTime.parse(item['created_date']);
+  //           result.add(DateTime(created.year, created.month, created.day)); // 시분초 제거
+  //         }
+  //       }
+  //
+  //       setState(() {
+  //         _attendedDates = result;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("출석 데이터 불러오기 실패: $e");
+  //   }
+  // }
+  Future<void> fetchAttendanceDates(String id) async {
+    try {
+      // 1. 유저의 point_no 가져오기
+      final pointRes = await DioClient.dio.get(
+        '/point/get_info_id_object',
+        queryParameters: {'id': id},
+      );
+      final pointNo = pointRes.data['point_no'];
+
+      // 2. point_no 기반 히스토리만 요청
+      final historyRes = await DioClient.dio.get('/point/get_history_point_no_list', queryParameters: {'id': id});
+
+      if (historyRes.data is List) {
+        final List<dynamic> data = historyRes.data;
         final Set<DateTime> result = {};
 
         for (final item in data) {
@@ -80,6 +141,36 @@ class _MyPageState extends State<MyPage> {
     });
   }
 
+  Future<void> _handleAttend() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getString('loggedInId');
+      if (id == null) return;
+
+      // point_no 조회
+      final pointRes = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
+      final pointNo = pointRes.data['point_no'];
+
+      // 포인트 지급 요청
+      final attendRes = await DioClient.dio.post('/point/create_history', data: {
+        'point_no': pointNo,
+        'change_amount': 10,
+        'point_plus_minus': 'P',
+        'point_change_reason_code': 'attendence',
+      });
+
+      if (attendRes.statusCode == 200 || attendRes.data == 11) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("🎉 출석 완료! 10냥 지급됨")));
+        await fetchData(); // 출석 여부 새로고침 (포인트 + 도장)
+      } else {
+        throw Exception("출석 실패");
+      }
+    } catch (e) {
+      print("출석 실패: $e");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("❌ 출석에 실패했어요")));
+    }
+  }
+
   Future<void> fetchData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -111,6 +202,8 @@ class _MyPageState extends State<MyPage> {
       final titleKey = 'selectedTitle_$id';
       final iconKey = 'selectedIcon_$id';
 
+      final attended = await fetchAttendanceStatus(id!);
+
       setState(() {
         nickname = memberData['nickname'] ?? '닉네임 없음';
         email = memberData['email'] ?? '이메일 없음';
@@ -120,6 +213,7 @@ class _MyPageState extends State<MyPage> {
         selectedTitle = prefs.getString(titleKey);
         selectedIcon = prefs.getString(iconKey);
         isLoading = false;
+        _isAttendedToday = attended;
       });
     } catch (e) {
       if (e is DioException) {
@@ -243,6 +337,8 @@ class _MyPageState extends State<MyPage> {
               _buildMarketButtons(),
               const SizedBox(height: 12),
               _buildCalendar(),
+              const SizedBox(height: 12),
+              _buildAttendanceButton(),
             ],
           ),
         ),
@@ -282,6 +378,16 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  Widget _buildAttendanceButton() {
+    return ElevatedButton(
+      onPressed: _isAttendedToday ? null : _handleAttend,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _isAttendedToday ? Colors.grey : Colors.greenAccent,
+      ),
+      child: Text(_isAttendedToday ? "출석 완료!" : "출석하기"),
+    );
+  }
+
   Widget _buildCalendar() {
     return Container(
       width: double.infinity,
@@ -311,31 +417,31 @@ class _MyPageState extends State<MyPage> {
                 titleTextFormatter: (date, locale) => "${date.month}월",
               ),
               calendarStyle: CalendarStyle(
-                todayDecoration: BoxDecoration(
+                todayTextStyle: TextStyle(
                   color: Colors.blueAccent,
-                  shape: BoxShape.circle,
+                  fontWeight: FontWeight.bold,
                 ),
-                selectedDecoration: BoxDecoration(
-                  color: Colors.amber,
-                  shape: BoxShape.circle,
+                todayDecoration: BoxDecoration(
+                  color: Colors.transparent, // ← 파란 동그라미 제거
+                ),
+                defaultDecoration: BoxDecoration(
+                  color: Colors.transparent, // ← 회색 동그라미 제거
                 ),
               ),
               calendarBuilders: CalendarBuilders(
-                defaultBuilder: (context, day, focusedDay) {
+                markerBuilder: (context, day, focusedDay) {
                   final isAttended = _attendedDates.contains(
                     DateTime(day.year, day.month, day.day),
                   );
 
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('${day.day}', style: const TextStyle(fontSize: 12)),
-                      const SizedBox(height: 4),
-                      isAttended
-                          ? const Icon(Icons.star, size: 16, color: Colors.amber)
-                          : const SizedBox(height: 16),
-                    ],
-                  );
+                  if (isAttended) {
+                    return Positioned(
+                      bottom: 4,
+                      child: Icon(Icons.star, size: 16, color: Colors.amber),
+                    );
+                  }
+
+                  return null;
                 },
               ),
             ),

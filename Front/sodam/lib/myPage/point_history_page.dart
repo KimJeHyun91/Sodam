@@ -48,7 +48,7 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
     switch (code) {
       case 'BUY':
         return '상점 물품 구매';
-      case 'CHECK_IN':
+      case 'attendence':
         return '출석 보상';
       case 'REWARD':
         return '미션 보상';
@@ -63,7 +63,7 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("화폐 사용내역"),
+        title: const Text("화폐 내역"),
         elevation: 0,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
