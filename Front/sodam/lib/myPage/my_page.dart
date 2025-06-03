@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:sodam/myPage/point_history_page.dart';
+import '../websocket_service.dart';
 import 'settings_page.dart';
 import 'store.dart';
 import 'collection.dart';
@@ -54,10 +55,29 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   fetchData();
+  // }
   @override
   void initState() {
     super.initState();
-    fetchData();
+    fetchData().then((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getString('loggedInId');
+
+      if (id != null) {
+        WebSocketService.connect(
+          userId: id,
+          onPointUpdate: (newPoint) {
+            setState(() {
+              _walletPoint = newPoint; // 지갑 실시간 반영!
+            });
+          },
+        );
+      }
+    });
   }
 
   Future<void> fetchData() async {
