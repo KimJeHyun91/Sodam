@@ -5,9 +5,9 @@ import '../services/bluetooth_service.dart' as my_ble;
 import 'game_board.dart';
 
 class CharacterSelectionPage extends StatefulWidget {
-  final List<String> players; // 모든 참가자 ID
-  final String myId; // 내 ID
-  final int seed; // 호스트가 보낸 seed
+  final List<String> players;
+  final String myId;
+  final int seed;
 
   const CharacterSelectionPage({
     super.key,
@@ -25,7 +25,7 @@ class _CharacterSelectionPageState extends State<CharacterSelectionPage> {
   int currentTurn = 1;
   bool characterSelected = false;
   CharacterRole? selectedRole;
-  final Map<String, CharacterRole> selectedRoles = {}; // ID -> 캐릭터 매핑
+  final Map<String, CharacterRole> selectedRoles = {};
 
   final Map<CharacterRole, String> roleLabels = {
     CharacterRole.fisherman: '어부',
@@ -85,8 +85,15 @@ class _CharacterSelectionPageState extends State<CharacterSelectionPage> {
 
         _checkAllSelected();
       } else if (type == "GAME_START") {
+        final sections = data.split("::");
+        if (sections.length != 2) return;
+
+        final roleDataStr = sections[0];
+        final playersStr = sections[1];
+        final players = playersStr.split("|");
+
         final roleMap = <String, CharacterRole>{};
-        final pairs = data.split(',');
+        final pairs = roleDataStr.split(',');
 
         for (var pair in pairs) {
           final items = pair.split('=');
@@ -103,24 +110,24 @@ class _CharacterSelectionPageState extends State<CharacterSelectionPage> {
 
         selectedRole = roleMap[widget.myId];
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => GameBoard(
-              initialRole: selectedRole!,
-              allRoles: roleMap,
+        if (selectedRole != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GameBoard(
+                initialRole: selectedRole!,
+                allRoles: roleMap,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     });
   }
 
   void _checkAllSelected() async {
-    if (selectedRoles.length == widget.players.length) {
-      if (isHost) {
-        await _startCountdownAndStartGame();
-      }
+    if (selectedRoles.length == widget.players.length && isHost) {
+      await _startCountdownAndStartGame();
     }
   }
 
@@ -141,14 +148,19 @@ class _CharacterSelectionPageState extends State<CharacterSelectionPage> {
         ),
       );
       await Future.delayed(const Duration(seconds: 1));
-      if (context.mounted) Navigator.of(context).pop(); // 다이얼로그 닫기
+      if (context.mounted) Navigator.of(context).pop();
     }
 
     final roleData = selectedRoles.entries
         .map((e) => '${e.value.name}=${e.key}')
         .join(',');
+    final playerListStr = widget.players.join('|');
 
-    await my_ble.BluetoothService().sendMessage("GAME_START:$roleData");
+    for (final playerId in widget.players) {
+      await my_ble.BluetoothService()
+          .sendMessageTo(playerId, "GAME_START:$roleData::$playerListStr");
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
 
     selectedRole = selectedRoles[widget.myId];
 
@@ -174,8 +186,13 @@ class _CharacterSelectionPageState extends State<CharacterSelectionPage> {
     });
 
     final message = "SELECTED:${role.name};id=${widget.myId}";
-    await my_ble.BluetoothService().sendMessage(message);
-    await my_ble.BluetoothService().sendMessage("TURN_NEXT:");
+    for (final playerId in widget.players) {
+      await my_ble.BluetoothService().sendMessageTo(playerId, message);
+    }
+    await Future.delayed(const Duration(milliseconds: 100));
+    for (final playerId in widget.players) {
+      await my_ble.BluetoothService().sendMessageTo(playerId, "TURN_NEXT:");
+    }
   }
 
   @override

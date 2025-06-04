@@ -4,13 +4,13 @@ import 'package:permission_handler/permission_handler.dart';
 
 Future<void> requestBluetoothPermissions() async {
   if (Platform.isAndroid) {
+    // Android 12 이상 → Bluetooth 권한 필요
     final permissions = [
       Permission.bluetooth,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
-      Permission.bluetoothAdvertise,
-      Permission.location,
-      Permission.accessMediaLocation,
+      Permission.location, // BLE 스캔용
+      Permission.accessMediaLocation, // 일부 BLE 기기용 (옵션)
     ];
 
     final statuses = await permissions.request();

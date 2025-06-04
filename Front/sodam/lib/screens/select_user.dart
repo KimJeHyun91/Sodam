@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/bluetooth_service.dart';
 import '../services/game_invitation_service.dart';
 import 'character_selection.dart';
+import '../components/invitation_dialog.dart';
 
 class SelectUserPage extends StatefulWidget {
   final String gameTitle;
@@ -17,6 +18,8 @@ class _SelectUserPageState extends State<SelectUserPage> {
   late GameInvitationService _invitationService;
   final List<Map<String, dynamic>> _users = [];
   final Set<String> _addedIds = {};
+  final Set<String> _connectedIds = {}; // ✅ 연결된 기기 ID 저장
+
   StreamSubscription? _scanSub;
   String? _myId;
   bool _isWaitingResponses = false;
@@ -24,20 +27,47 @@ class _SelectUserPageState extends State<SelectUserPage> {
   @override
   void initState() {
     super.initState();
+
     _invitationService = GameInvitationService(_btService);
-    _invitationService.listenForResponses();
+    _invitationService.setOnAllAccepted(_goToCharacterPage);
+    _invitationService.setOnRejected((id) {
+      setState(() => _isWaitingResponses = false);
+      _showSnackBar("🙅 $id 님이 초대를 거절했습니다.");
+    });
+
     _setupBluetooth();
+
+    _invitationService.onMessage.listen((message) {
+      if (message.contains("INVITE_FROM")) {
+        final senderId = message.split(":")[1];
+        showDialog(
+          context: context,
+          builder: (_) => InvitationDialog(
+            senderId: senderId,
+            onAccept: () => _btService.sendMessageTo(senderId, "$senderId:ACCEPT"),
+            onDecline: () => _btService.sendMessageTo(senderId, "$senderId:DECLINE"),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _setupBluetooth() async {
     await _btService.initBluetooth();
 
-    _scanSub = _btService.discoveredDevices.listen((devices) {
-      for (var device in devices) {
-        final id = device.id.id;
-        final name = device.name.trim();
+    _scanSub = _btService.scanResults.listen((results) {
+      for (var result in results) {
+        final device = result.device;
+        final id = device.remoteId.str;
+        final name = device.platformName.trim();
 
         if (name.isEmpty || _addedIds.contains(id)) continue;
+
+        // ✅ 이어폰, TV 필터링
+        final lowered = name.toLowerCase();
+        if (lowered.contains("buds") || lowered.contains("tv") || lowered.contains("bose") || lowered.contains("galaxy watch") || lowered.contains("le-")) {
+          continue;
+        }
 
         _myId ??= id;
         _addedIds.add(id);
@@ -53,53 +83,70 @@ class _SelectUserPageState extends State<SelectUserPage> {
     });
 
     Future.delayed(const Duration(seconds: 60), () {
-      _btService.stopScanning();
+      _btService.stopAll();
     });
   }
 
   void _restartScan() async {
-    await _btService.stopScanning();
+    _btService.stopAll();
     _addedIds.clear();
+    _connectedIds.clear();
     _users.clear();
     setState(() {});
-    await _btService.startScanning(force: true); // force 재시작
+    await _btService.startScanning();
+  }
+
+  void _connectSelectedUsers() async {
+    final selected = _users.where((u) => u["checked"]).toList();
+    if (selected.isEmpty) return;
+
+    for (var user in selected) {
+      final id = user["id"];
+      try {
+        final connected = await _btService.connectToDeviceById(id);
+        if (connected) {
+          _connectedIds.add(id);
+          _showSnackBar("✅ $id 연결 성공");
+        } else {
+          _showSnackBar("❌ $id 연결 실패");
+        }
+      } catch (e) {
+        _showSnackBar("⚠️ $id 연결 오류: $e");
+      }
+    }
+
+    setState(() {});
   }
 
   void _startInvitationProcess() async {
-    final selected = _users.where((u) => u["checked"]).toList();
-    if (selected.isEmpty || _myId == null) return;
+    if (_connectedIds.isEmpty || _myId == null) {
+      _showSnackBar("❌ 먼저 연결 후 게임을 시작하세요");
+      return;
+    }
 
-    final selectedIds = selected.map((u) => u["id"] as String).toList();
+    final selectedIds = _connectedIds.toList();
     if (!selectedIds.contains(_myId)) selectedIds.insert(0, _myId!);
 
     setState(() => _isWaitingResponses = true);
-
-    _invitationService.setOnAllAccepted(() {
-      setState(() => _isWaitingResponses = false);
-
-      if (selectedIds.length < 2) {
-        _showSnackBar("2명 이상 수락해야 게임을 시작할 수 있어요.");
-        return;
-      }
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CharacterSelectionPage(
-            players: selectedIds,
-            myId: _myId!,
-            seed: DateTime.now().millisecondsSinceEpoch,
-          ),
-        ),
-      );
-    });
-
-    _invitationService.setOnRejected((id) {
-      setState(() => _isWaitingResponses = false);
-      _showSnackBar("🙅 $id 님이 초대를 거절했습니다.");
-    });
-
     await _invitationService.sendInvitations(selectedIds);
+  }
+
+  void _goToCharacterPage() {
+    setState(() => _isWaitingResponses = false);
+    final ids = _connectedIds.toList();
+    if (!ids.contains(_myId)) ids.insert(0, _myId!);
+
+    final seed = DateTime.now().millisecondsSinceEpoch;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CharacterSelectionPage(
+          players: ids,
+          myId: _myId!,
+          seed: seed,
+        ),
+      ),
+    );
   }
 
   void _showSnackBar(String msg) {
@@ -110,6 +157,7 @@ class _SelectUserPageState extends State<SelectUserPage> {
   void dispose() {
     _scanSub?.cancel();
     _btService.stopAll();
+    _invitationService.dispose();
     super.dispose();
   }
 
@@ -137,6 +185,7 @@ class _SelectUserPageState extends State<SelectUserPage> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final user = _users[index];
+                  final isConnected = _connectedIds.contains(user["id"]);
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -156,6 +205,13 @@ class _SelectUserPageState extends State<SelectUserPage> {
                             children: [
                               Text(user["name"], style: const TextStyle(fontWeight: FontWeight.bold)),
                               Text(user["id"], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              Text(
+                                isConnected ? "✅ 연결됨" : "⛔ 미연결",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isConnected ? Colors.green : Colors.red,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -177,17 +233,26 @@ class _SelectUserPageState extends State<SelectUserPage> {
             if (_isWaitingResponses)
               const Center(child: CircularProgressIndicator())
             else
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _startInvitationProcess,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD8EECF),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _connectSelectedUsers,
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                      child: const Text("🔗 연결하기", style: TextStyle(color: Colors.white)),
+                    ),
                   ),
-                  child: const Text("게임 시작", style: TextStyle(fontSize: 16, color: Colors.black)),
-                ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _startInvitationProcess,
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      child: const Text("🎮 게임 시작", style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
               ),
           ],
         ),

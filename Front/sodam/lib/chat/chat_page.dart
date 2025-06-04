@@ -5,8 +5,8 @@ import '../chat/chat_room_model.dart';
 import '../components/bottom_nav.dart';
 import 'room_create_sheet.dart';
 import 'chat_room_page.dart';
+import '../services/bluetooth_service.dart' as my_ble;
 import 'dart:async';
-
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -21,10 +21,14 @@ class _ChatPageState extends State<ChatPage> {
   bool isScanning = false;
   StreamSubscription<List<ScanResult>>? _scanSubscription;
 
+  final String targetServiceUuid = "12345678-1234-1234-1234-567890123456";
+
   @override
   void initState() {
     super.initState();
-    _requestPermissions();
+    _requestPermissions().then((_) {
+      my_ble.BluetoothService().initBluetooth();
+    });
   }
 
   @override
@@ -41,36 +45,6 @@ class _ChatPageState extends State<ChatPage> {
       Permission.bluetoothAdvertise,
       Permission.locationWhenInUse,
     ].request();
-  }
-
-  void _loadBLEUsers() {
-    setState(() {
-      isScanning = true;
-      bleUsers.clear();
-    });
-
-    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
-    _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
-      for (var r in results) {
-        final isAppUser = r.advertisementData.manufacturerData.values.any(
-              (data) => String.fromCharCodes(data).contains("BLE_1to1_CHAT"),
-        );
-        if (isAppUser && !bleUsers.any((d) => d.id == r.device.id)) {
-          if (!mounted) return;
-          setState(() {
-            bleUsers.add(r.device);
-          });
-        }
-      }
-    });
-
-    Future.delayed(const Duration(seconds: 6), () {
-      if (!mounted) return;
-      setState(() {
-        isScanning = false;
-      });
-      _scanSubscription?.cancel();
-    });
   }
 
   void _openRoomCreateSheet() async {
@@ -143,7 +117,7 @@ class _ChatPageState extends State<ChatPage> {
               const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               IconButton(
                 icon: const Icon(Icons.refresh),
-                onPressed: isScanning ? null : _loadBLEUsers,
+                onPressed: isScanning ? null : () => my_ble.BluetoothService().initBluetooth(),
               ),
             ],
           ),
@@ -187,8 +161,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 }
-
-// -------------------------- 기타 방 UI -------------------------
 
 Widget _openChatList(BuildContext context) {
   return Column(
