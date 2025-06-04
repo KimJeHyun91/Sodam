@@ -372,20 +372,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _loadProfileImage(String id) async {
     final options = await _authOptions();
     try {
-      final response = await dio.get<List<int>>(
+      final response = await dio.get(
         'http://10.0.2.2:8080/member/get_image',
         queryParameters: {'id': id},
         options: options.copyWith(responseType: ResponseType.bytes),
       );
 
-      if (response.statusCode == 200 && response.data != null && response.data!.isNotEmpty) {
-
-        // _originalImageBytes = Uint8List.fromList(response.data!);  // ✅ 이건 비교용 아님, 렌더링용으로만 사용
-
-
+      if (response.statusCode == 200 && response.data != null && response.data.isNotEmpty) {
         setState(() {
-          // ✅ 이미지가 있지만, 여기서 _selectedImage는 null로 둬야 초기상태에서 변화를 안 감지함
-          _selectedImage = response.data as File?;
+          _originalImageBytes = Uint8List.fromList(response.data); // 서버 이미지
+          _selectedImage = null; // 사용자가 직접 고르기 전까지는 null
         });
       } else {
         print("기본 이미지 사용");
@@ -556,6 +552,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     radius: 100,
                     backgroundImage: _selectedImage != null
                         ? FileImage(_selectedImage!)
+                        : _originalImageBytes != null
+                        ? MemoryImage(_originalImageBytes!)
                         : const AssetImage('assets/images/gibon2.jpeg') as ImageProvider,
                   ),
                   Positioned(

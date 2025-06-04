@@ -212,6 +212,7 @@ class _StorePageState extends State<StorePage> {
                 // await prefs.setString('selectedFrame_$id', item.imagePath);
                 if (item.imagePath != null) {
                   await prefs.setString('selectedFrame_$id', item.imagePath!);
+                  print('✅ 프레임 저장됨 [selectedFrame_$id]: ${item.imagePath!}');
                 } else {
                   print('❌ 프레임 이미지 경로가 null입니다: ${item.name}');
                 }

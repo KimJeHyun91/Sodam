@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:sodam/myPage/point_history_page.dart';
@@ -30,6 +33,10 @@ class _MyPageState extends State<MyPage> {
 
   Set<DateTime> _attendedDates = {};
   bool _isAttendedToday = false;
+
+  final Dio dio = Dio();
+  Uint8List? _originalImageBytes;
+  File? _selectedImage;
 
   Future<bool> fetchAttendanceStatus(String id) async {
     try {
@@ -88,6 +95,38 @@ class _MyPageState extends State<MyPage> {
       }
     } catch (e) {
       print("출석 데이터 불러오기 실패: $e");
+    }
+  }
+
+  Future<Options> _authOptions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+    return Options(headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<void> _loadProfileImage(String id) async {
+    final options = await _authOptions();
+    try {
+      final response = await dio.get(
+        'http://10.0.2.2:8080/member/get_image',
+        queryParameters: {'id': id},
+        options: options.copyWith(responseType: ResponseType.bytes),
+      );
+
+      if (response.statusCode == 200 && response.data != null && response.data.isNotEmpty) {
+        setState(() {
+          _originalImageBytes = Uint8List.fromList(response.data); // 서버 이미지
+          _selectedImage = null; // 사용자가 직접 고르기 전까지는 null
+        });
+      } else {
+        print("기본 이미지 사용");
+        setState(() {
+          // ✅ 이미지가 있지만, 여기서 _selectedImage는 null로 둬야 초기상태에서 변화를 안 감지함
+          _selectedImage = null;
+        });
+      }
+    } catch (e) {
+      print("이미지 로딩 실패: $e");
     }
   }
 
@@ -163,6 +202,8 @@ class _MyPageState extends State<MyPage> {
 
       await fetchAttendanceDates(id);
 
+      await _loadProfileImage(id); // 프로필 이미지 불러오는거
+
       final response = await DioClient.dio.get('/member/get_member_object', queryParameters: {'id': id});
       final pointResponse = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
 
@@ -221,7 +262,7 @@ class _MyPageState extends State<MyPage> {
               // 프로필 카드
               Container(
                 width: double.infinity,
-                height: 380,
+                height: 430,
                 decoration: BoxDecoration(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.grey[850]
@@ -240,16 +281,20 @@ class _MyPageState extends State<MyPage> {
                               if (selectedFrame != null && selectedFrame!.isNotEmpty)
                                 Image.asset(
                                   selectedFrame!,
-                                  width: 220,
-                                  height: 220,
+                                  width: 300,
+                                  height: 300,
                                 ),
-                              const CircleAvatar(
-                                radius: 100,
-                                backgroundImage: AssetImage('assets/images/gibon2.jpeg'),
+                              CircleAvatar(
+                                radius: 92,
+                                backgroundImage: _selectedImage != null
+                                    ? FileImage(_selectedImage!)
+                                    : _originalImageBytes != null
+                                    ? MemoryImage(_originalImageBytes!)
+                                    : const AssetImage('assets/images/gibon2.jpeg') as ImageProvider,
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 5),
                           if (selectedTitle != null)
                             Text(
                               selectedTitle!,
@@ -319,9 +364,9 @@ class _MyPageState extends State<MyPage> {
               const SizedBox(height: 12),
               _buildMarketButtons(),
               const SizedBox(height: 12),
-              _buildCalendar(),
-              const SizedBox(height: 12),
               _buildAttendanceButton(),
+              const SizedBox(height: 12),
+              _buildCalendar(),
             ],
           ),
         ),
@@ -437,12 +482,70 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  // Widget _buildMarketButtons() {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: GestureDetector(
+  //           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StorePage())),
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(vertical: 24),
+  //             decoration: BoxDecoration(
+  //               color: Theme.of(context).brightness == Brightness.dark
+  //                   ? Colors.grey[850]
+  //                   : Colors.white,
+  //               borderRadius: BorderRadius.circular(16),
+  //             ),
+  //             alignment: Alignment.center,
+  //             child: const Text("장터", style: TextStyle(fontSize: 18)),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(width: 12),
+  //       Expanded(
+  //         child: GestureDetector(
+  //           // onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionPage())),
+  //           onTap: () {
+  //             Navigator.push(
+  //               context,
+  //               MaterialPageRoute(builder: (_) => const CollectionPage()),
+  //             ).then((result) {
+  //               if (result == true) {
+  //                 fetchData();
+  //               }
+  //             });
+  //           },
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(vertical: 24),
+  //             decoration: BoxDecoration(
+  //               color: Theme.of(context).brightness == Brightness.dark
+  //                   ? Colors.grey[850]
+  //                   : Colors.white,
+  //               borderRadius: BorderRadius.circular(16),
+  //             ),
+  //             alignment: Alignment.center,
+  //             child: const Text("수집", style: TextStyle(fontSize: 18)),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
   Widget _buildMarketButtons() {
     return Row(
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StorePage())),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StorePage()),
+              ).then((result) {
+                if (result == true) {
+                  fetchData(); // ✅ 상점에서 적용 후 돌아오면 새로고침
+                }
+              });
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               decoration: BoxDecoration(
@@ -459,14 +562,13 @@ class _MyPageState extends State<MyPage> {
         const SizedBox(width: 12),
         Expanded(
           child: GestureDetector(
-            // onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionPage())),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CollectionPage()),
               ).then((result) {
                 if (result == true) {
-                  fetchData();
+                  fetchData(); // ✅ 수집에서도 동일하게 새로고침
                 }
               });
             },
