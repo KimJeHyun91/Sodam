@@ -75,7 +75,7 @@ class _MyPageState extends State<MyPage> {
         '/point/get_info_id_object',
         queryParameters: {'id': id},
       );
-      final pointNo = pointRes.data['point_no'];
+      final pointNo = pointRes.data['data']['point_no'];
 
       // 2. point_no 기반 히스토리만 요청
       final historyRes = await DioClient.dio.get('/point/get_history_point_no_list', queryParameters: {'id': id});
@@ -132,6 +132,7 @@ class _MyPageState extends State<MyPage> {
 
       // point_no 조회
       final pointRes = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
+      print('📦 pointRes: ${pointRes.data}');
       final pointNo = pointRes.data['point_no'];
 
       // 포인트 지급 요청
@@ -226,12 +227,19 @@ class _MyPageState extends State<MyPage> {
       if (id == null) return;
 
       final response = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
-      if (response.statusCode == 200 && response.data != null) {
-        final point = response.data['current_point'];
-        setState(() {
-          myPoint = point;
-        });
+      final data = response.data;
+
+      // ✅ 방어 코드 추가
+      if (data is! Map || !data.containsKey('current_point')) {
+        print('❌ current_point 없음 또는 응답 형식 문제: $data');
+        return;
       }
+
+      final point = data['current_point'];
+
+      setState(() {
+        myPoint = point;
+      });
     } catch (e) {
       print("엽전 가져오기 실패: $e");
     }
