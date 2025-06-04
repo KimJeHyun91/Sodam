@@ -31,6 +31,12 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _scanForNeighbors() {
+    // TODO: 블루투스 스캔 로직 연결
+    // ex) FlutterBluePlus.startScan(timeout: Duration(seconds: 4));
+    print('🔍 주변 이웃 스캔 시작');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,7 +44,16 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              TextButton(
+                onPressed: _scanForNeighbors, // 아래에 함수 추가 예정
+                child: const Text('이웃찾기'),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           _neighborList(context),
 
