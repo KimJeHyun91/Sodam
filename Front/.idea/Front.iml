@@ -15,6 +15,9 @@
       <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
+      <excludeFolder url="file://$MODULE_DIR$/sodam/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/sodam/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/sodam/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

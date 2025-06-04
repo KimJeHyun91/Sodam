@@ -1,9 +1,13 @@
+// 📁 lib/services/bluetooth_service.dart
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_ble_peripheral/flutter_ble_peripheral.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as flutter_blue;
+
+import 'permission_request.dart'; // ✅ 권한 요청 포함
 
 class BluetoothService {
   static final BluetoothService _instance = BluetoothService._internal();
@@ -32,48 +36,54 @@ class BluetoothService {
   flutter_blue.BluetoothCharacteristic? get writeChar => _writeChar;
   flutter_blue.BluetoothCharacteristic? get notifyChar => _notifyChar;
 
-  /// Bluetooth 초기화 및 스캔/광고 시작
-  Future<void> initBluetooth() async {
+  /// Bluetooth 초기화: UUID를 받아 광고/스캔 시작
+  Future<void> initBluetooth(String uuid) async {
+    await requestBluetoothPermissions(); // 권한 요청
     await stopAll();
     await Future.delayed(const Duration(milliseconds: 300));
-    await startAdvertising();
-    await startScanning();
+    await startAdvertising(uuid); // ✅ UUID 포함 광고 시작
+    await startScanning();        // ✅ 상대 UUID 수신
   }
 
-  /// BLE 광고 시작
-  Future<void> startAdvertising() async {
+
+  Future<void> startAdvertising(String uuid) async {
     if (_isAdvertising) return;
 
     final advertiseData = AdvertiseData(
       includeDeviceName: true,
       manufacturerId: 777,
-      manufacturerData: Uint8List.fromList(utf8.encode("BLE_1to1_CHAT")),
+      manufacturerData: Uint8List.fromList(utf8.encode(uuid)),
       serviceUuid: '12345678-1234-5678-1234-56789abcdef0',
     );
 
     await _blePeripheral.start(advertiseData: advertiseData);
     _isAdvertising = true;
-    print("📢 광고 시작");
+    print("📢 광고 시작: 내 UUID는 $uuid");
   }
 
-  /// BLE 스캔 시작
+
   Future<void> startScanning({bool force = false}) async {
     if (_isScanning && !force) return;
 
     await flutter_blue.FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 10));
+      timeout: const Duration(seconds: 10),
+    );
     _isScanning = true;
 
     flutter_blue.FlutterBluePlus.scanResults.listen((results) {
       for (var r in results) {
-        final isAppUser = r.advertisementData.manufacturerData.values.any(
-              (data) => utf8.decode(data).contains("BLE_1to1_CHAT"),
-        );
+        for (var data in r.advertisementData.manufacturerData.values) {
+          try {
+            final remoteUuid = utf8.decode(data);
+            print("📡 발견된 기기 UUID: $remoteUuid (${r.device.name}, ${r.device.id})");
 
-        if (isAppUser &&
-            !_discoveredDevices.any((d) => d.id == r.device.id)) {
-          _discoveredDevices.add(r.device);
-          _deviceStreamController.add(_discoveredDevices);
+            if (!_discoveredDevices.any((d) => d.id == r.device.id)) {
+              _discoveredDevices.add(r.device);
+              _deviceStreamController.add(_discoveredDevices);
+            }
+          } catch (e) {
+            print("⚠️ UUID 디코딩 실패: $e");
+          }
         }
       }
     });
@@ -84,23 +94,25 @@ class BluetoothService {
     if (_isScanning) {
       await flutter_blue.FlutterBluePlus.stopScan();
       _isScanning = false;
+      print("🛑 스캔 중지");
     }
   }
 
-  /// 모든 연결/광고/리스닝 중지
+  /// 모든 BLE 작업 정지
   Future<void> stopAll() async {
     if (_isAdvertising) {
       await _blePeripheral.stop();
       _isAdvertising = false;
+      print("🛑 광고 정지");
     }
 
     await stopScanning();
-
     _notifySubscription?.cancel();
     _notifySubscription = null;
+    print("🧹 모든 BLE 작업 정리 완료");
   }
 
-  /// BLE 기기 연결 및 특성 발견
+  /// BLE 기기 연결 및 특성 확인
   Future<void> connectToDevice(flutter_blue.BluetoothDevice device) async {
     await device.connect();
     _connectedDevice = device;
@@ -129,7 +141,7 @@ class BluetoothService {
     }
   }
 
-  /// 기본 연결된 대상에게 메시지 전송
+  /// 메시지 전송 (기본 대상)
   Future<void> sendMessage(String message) async {
     if (_writeChar == null) {
       print("❌ 전송 실패: 쓰기 특성 없음");
@@ -139,7 +151,7 @@ class BluetoothService {
     print("📤 전송됨: $message");
   }
 
-  /// 특정 ID 대상에게 메시지 전송
+  /// 메시지 전송 (특정 대상)
   Future<void> sendMessageTo(String targetId, String message) async {
     final char = _writeCharMap[targetId];
     if (char != null) {
@@ -150,7 +162,7 @@ class BluetoothService {
     }
   }
 
-  /// 수신 메시지를 외부로 전달
+  /// 수신 메시지 구독
   void listenToMessages(void Function(String message) onMessageReceived) {
     _notifySubscription?.cancel();
 

@@ -5,6 +5,8 @@ import '../chat/chat_room_model.dart';
 import '../components/bottom_nav.dart';
 import 'room_create_sheet.dart';
 import 'chat_room_page.dart';
+import 'dart:async';
+
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -16,12 +18,19 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   List<ChatRoomModel> customRooms = [];
   List<BluetoothDevice> bleUsers = [];
+  bool isScanning = false;
+  StreamSubscription<List<ScanResult>>? _scanSubscription;
 
   @override
   void initState() {
     super.initState();
     _requestPermissions();
-    _loadBLEUsers();
+  }
+
+  @override
+  void dispose() {
+    _scanSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _requestPermissions() async {
@@ -35,18 +44,32 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _loadBLEUsers() {
+    setState(() {
+      isScanning = true;
+      bleUsers.clear();
+    });
+
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
-    FlutterBluePlus.scanResults.listen((results) {
+    _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
       for (var r in results) {
         final isAppUser = r.advertisementData.manufacturerData.values.any(
               (data) => String.fromCharCodes(data).contains("BLE_1to1_CHAT"),
         );
         if (isAppUser && !bleUsers.any((d) => d.id == r.device.id)) {
+          if (!mounted) return;
           setState(() {
             bleUsers.add(r.device);
           });
         }
       }
+    });
+
+    Future.delayed(const Duration(seconds: 6), () {
+      if (!mounted) return;
+      setState(() {
+        isScanning = false;
+      });
+      _scanSubscription?.cancel();
     });
   }
 
@@ -60,7 +83,7 @@ class _ChatPageState extends State<ChatPage> {
       builder: (_) => RoomCreateSheet(bleUsers: bleUsers),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() {
         customRooms.add(result);
       });
@@ -102,7 +125,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
   }
 
   @override
@@ -112,8 +137,22 @@ class _ChatPageState extends State<ChatPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('이웃', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: isScanning ? null : _loadBLEUsers,
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
+          if (isScanning)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Center(child: Text("🔍 기기 찾는 중...")),
+            ),
           ...bleUsers.map((device) {
             final name = device.name.isNotEmpty ? device.name : '(이름 없음)';
             return ListTile(
