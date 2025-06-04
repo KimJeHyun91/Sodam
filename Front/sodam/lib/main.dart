@@ -1,17 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'intro_page.dart';
-//
-// void main() {
-//   runApp(MaterialApp(
-//     home: const IntroPage(),
-//     debugShowCheckedModeBanner: false,
-//
-//     // 전역 폰트 적용
-//     theme: ThemeData(
-//       fontFamily: 'EBSHunminjeongeum',
-//     ),
-//   ));
-// }
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'intro_page.dart';
@@ -34,36 +20,17 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isDarkMode = false;
-  Widget _initialScreen = const CircularProgressIndicator(); // 초기 상태: 로딩
 
   @override
   void initState() {
     super.initState();
     _loadTheme();
-    _checkLoginStatus(); // ✅ 로그인 여부 확인
   }
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
-  }
-
-  Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString('loggedInId');
-    final token = prefs.getString('token');
-    final isGuest = prefs.getBool('isGuest') ?? false;
-
-    setState(() {
-      if (id != null && token != null) {
-        _initialScreen = const MainPage(); // 회원 로그인
-      } else if (isGuest) {
-        _initialScreen = const MainPage(); // 비회원 로그인
-      } else {
-        _initialScreen = const AuthChoicePage(); // 비로그인 상태
-      }
     });
   }
 
@@ -80,7 +47,6 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
       theme: ThemeData(
         fontFamily: 'EBSHunminjeongeum',
         brightness: Brightness.light,
@@ -96,11 +62,10 @@ class _MyAppState extends State<MyApp> {
           unselectedItemColor: Colors.grey,
         ),
       ),
-
       darkTheme: ThemeData(
         fontFamily: 'EBSHunminjeongeum',
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Color(0xFF121212),
+        scaffoldBackgroundColor: const Color(0xFF121212),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF1E1E1E),
           foregroundColor: Colors.white,
@@ -112,8 +77,7 @@ class _MyAppState extends State<MyApp> {
           unselectedItemColor: Colors.grey,
         ),
       ),
-
-      home: _initialScreen,
+      home: const IntroPage(), // 👉 여기서만 판단하도록!
     );
   }
 }
