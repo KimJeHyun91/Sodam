@@ -24,6 +24,12 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
       final id = prefs.getString('loggedInId') ?? '';
       if (id.isEmpty) return;
 
+      final pointRes = await DioClient.dio.get(
+        '/point/get_info_id_object',
+        queryParameters: {'id': id},
+      );
+      final pointNo = pointRes.data['point_no'];
+
       final historyRes = await DioClient.dio.get(
         '/point/get_history_point_no_list',
         queryParameters: {'id': id}, // ✅ pointNo 아님!
@@ -36,7 +42,7 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
           'date': item['created_date'],
           'amount': item['change_amount'],
           'type': item['point_plus_minus'], // 'P' or 'M'
-          'reason': item['point_change_reason_code'],
+          'reason': item['point_change_reason_code'], // 예: 'BUY', 'attendence'
         }).toList();
       });
     } catch (e) {
@@ -122,3 +128,4 @@ class _PointHistoryPageState extends State<PointHistoryPage> {
     );
   }
 }
+

@@ -7,6 +7,9 @@ import 'guest_warning_page.dart';
 import 'package:sodam/dio_client.dart';
 import 'package:dio/dio.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import '../api/point_api.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -48,6 +51,12 @@ class _LoginPageState extends State<LoginPage> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', response.data['token']);
         await prefs.setString('loggedInId', id);
+
+        final pointNo = await fetchPointNo(id);
+        if (pointNo != null) {
+          await prefs.setInt('point_no', pointNo);
+          print('✅ 엽전 번호 저장 완료: $pointNo');
+        }
 
         await prefs.remove('isGuest');
         await prefs.remove('guest_uuid');

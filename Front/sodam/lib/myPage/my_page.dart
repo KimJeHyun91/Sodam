@@ -18,6 +18,9 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
+  int? currentPoint;
+  int? myPoint;
+
   String nickname = '';
   String email = '';
   bool isLoading = true;
@@ -30,7 +33,14 @@ class _MyPageState extends State<MyPage> {
   Set<DateTime> _attendedDates = {};
   bool _isAttendedToday = false;
 
+  void increasePoint(int earned) {
+    setState(() {
+      _walletPoint += earned;
+    });
+  }
+
   Future<bool> fetchAttendanceStatus(String id) async {
+
     try {
       final response = await DioClient.dio.get(
         '/point/get_history_list',
@@ -58,32 +68,6 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
-  // Future<void> fetchAttendanceDates(String id) async {
-  //   try {
-  //     final response = await DioClient.dio.get(
-  //       '/point/get_history_list',
-  //       queryParameters: {'id': id},
-  //     );
-  //
-  //     if (response.data is List) {
-  //       final List<dynamic> data = response.data;
-  //       final Set<DateTime> result = {};
-  //
-  //       for (final item in data) {
-  //         if (item['point_change_reason_code'] == 'attendence') {
-  //           final created = DateTime.parse(item['created_date']);
-  //           result.add(DateTime(created.year, created.month, created.day)); // 시분초 제거
-  //         }
-  //       }
-  //
-  //       setState(() {
-  //         _attendedDates = result;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print("출석 데이터 불러오기 실패: $e");
-  //   }
-  // }
   Future<void> fetchAttendanceDates(String id) async {
     try {
       // 1. 유저의 point_no 가져오기
@@ -91,7 +75,7 @@ class _MyPageState extends State<MyPage> {
         '/point/get_info_id_object',
         queryParameters: {'id': id},
       );
-      final pointNo = pointRes.data['point_no'];
+      final pointNo = pointRes.data['data']['point_no'];
 
       // 2. point_no 기반 히스토리만 요청
       final historyRes = await DioClient.dio.get('/point/get_history_point_no_list', queryParameters: {'id': id});
@@ -107,9 +91,7 @@ class _MyPageState extends State<MyPage> {
           }
         }
 
-        setState(() {
-          _attendedDates = result;
-        });
+        setState(() {_attendedDates = result;});
       }
     } catch (e) {
       print("출석 데이터 불러오기 실패: $e");
@@ -124,6 +106,7 @@ class _MyPageState extends State<MyPage> {
   @override
   void initState() {
     super.initState();
+
     fetchData().then((_) async {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getString('loggedInId');
@@ -149,6 +132,7 @@ class _MyPageState extends State<MyPage> {
 
       // point_no 조회
       final pointRes = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
+      print('📦 pointRes: ${pointRes.data}');
       final pointNo = pointRes.data['point_no'];
 
       // 포인트 지급 요청
@@ -192,6 +176,7 @@ class _MyPageState extends State<MyPage> {
       }
 
       await fetchAttendanceDates(id);
+      await fetchPoint();
 
       final response = await DioClient.dio.get('/member/get_member_object', queryParameters: {'id': id});
       final pointResponse = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
@@ -235,12 +220,35 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
+  Future<void> fetchPoint() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getString('loggedInId');
+      if (id == null) return;
+
+      final response = await DioClient.dio.get('/point/get_info_id_object', queryParameters: {'id': id});
+      final data = response.data;
+
+      // ✅ 방어 코드 추가
+      if (data is! Map || !data.containsKey('current_point')) {
+        print('❌ current_point 없음 또는 응답 형식 문제: $data');
+        return;
+      }
+
+      final point = data['current_point'];
+
+      setState(() {
+        myPoint = point;
+      });
+    } catch (e) {
+      print("엽전 가져오기 실패: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? Colors.black
-          : const Color(0xFFF2F2F2),
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: SafeArea(
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -374,6 +382,9 @@ class _MyPageState extends State<MyPage> {
               "$_walletPoint 냥",
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
+            if (myPoint != null)
+              Text("✨ 현재 보유 엽전: $myPoint 냥", style: const TextStyle(fontSize: 16)),
           ],
         ),
       ),

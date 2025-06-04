@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../dio_client.dart';
+import '../point_util.dart';
+import '../game_page.dart';
 
 class RockPaperScissorsPage extends StatefulWidget {
   final String myNickname;
@@ -41,6 +45,35 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
   void dispose() {
     timer?.cancel();
     super.dispose();
+  }
+  Future<void> refreshPoint() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString('loggedInId');
+
+    if (id == null) return;
+
+    try {
+      final res = await DioClient.dio.get(
+        '/point/get_info_id_object',
+        queryParameters: {'id': id},
+      );
+
+      final data = res.data;
+
+      // ✅ 방어 코드 추가
+      if (data is! Map || !data.containsKey('current_point')) {
+        print('❌ 응답이 JSON이 아님 또는 current_point 없음: $data');
+        return;
+      }
+
+      final point = data['current_point'];
+      print('✅ 최신 포인트: $point');
+
+      // 예: setState(() { myPoint = point; }); → 필요 시 UI 갱신
+
+    } catch (e) {
+      print('❌ 포인트 갱신 실패: $e');
+    }
   }
 
   Future<void> startCountdown() async {
@@ -168,8 +201,10 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
 
   void showFinalResult() {
     String finalMessage;
-    if (myScore > opponentScore) {
-      finalMessage = '${widget.myNickname} 승리! 🎉 엽전 1개 획득';
+    final isMyWin = myScore > opponentScore;
+
+    if (isMyWin) {
+      finalMessage = '${widget.myNickname} 승리! 🎉 엽전 50냥 획득';
     } else if (myScore < opponentScore) {
       finalMessage = '${widget.opponentNickname} 승리! ❌ 엽전 획득 실패';
     } else {
@@ -180,12 +215,7 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Center(
-          child: Text(
-            '최종 결과',
-            textAlign: TextAlign.center,
-          ),
-        ),
+        title: const Center(child: Text('최종 결과', textAlign: TextAlign.center)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -199,9 +229,16 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop(); // 다이얼로그 닫기
-              Navigator.of(context).pop(); // 게임 화면 종료
+              if (myScore > opponentScore) {
+                await giveReward(50, reasonCode: 'RPS_WIN');
+                await refreshPoint();
+              }
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const GamePage()),
+              );
             },
             child: const Text('확인'),
           ),
@@ -213,7 +250,7 @@ class _RockPaperScissorsPageState extends State<RockPaperScissorsPage> {
   void showRoundResultDialog(String resultMessage) {
     showDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: Center( // ✅ 제목 가운데 정렬
           child: Text(
