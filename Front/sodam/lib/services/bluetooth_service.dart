@@ -16,21 +16,17 @@ class BluetoothService extends ChangeNotifier {
 
   final Map<String, flutter_blue.BluetoothDevice> _connectedDevices = {};
   final Map<String, flutter_blue.BluetoothCharacteristic> _writeChars = {};
+  final Map<String, flutter_blue.BluetoothCharacteristic> _notifyChars = {};
   List<flutter_blue.ScanResult> _cachedResults = [];
 
   StreamSubscription? _scanSubscription;
   void Function(String message)? _onMessageReceived;
 
+  bool get isCurrentlyAdvertising => _isAdvertising;
+  bool get isCurrentlyScanning => _isScanning;
+
   void listenToMessages(void Function(String message) callback) {
     _onMessageReceived = callback;
-  }
-
-  Future<void> initBluetooth() async {
-    await stopAll();
-    await Future.delayed(const Duration(milliseconds: 300));
-    await startAdvertising();
-    await startScanning(duration: const Duration(seconds: 60));
-    _cacheScanResults();
   }
 
   void _cacheScanResults() {
@@ -41,20 +37,7 @@ class BluetoothService extends ChangeNotifier {
     });
   }
 
-  Future<void> stopAll() async {
-    _scanSubscription?.cancel();
-    if (_isAdvertising) {
-      await _blePeripheral.stop();
-      _isAdvertising = false;
-      print("🛑 광고 중지됨");
-    }
-    if (_isScanning) {
-      await flutter_blue.FlutterBluePlus.stopScan();
-      _isScanning = false;
-      print("🛑 스캔 중지됨");
-    }
-  }
-
+  // 👉 광고 시작
   Future<void> startAdvertising() async {
     if (_isAdvertising) return;
 
@@ -67,15 +50,45 @@ class BluetoothService extends ChangeNotifier {
 
     await _blePeripheral.start(advertiseData: advertiseData);
     _isAdvertising = true;
-    print("📢 광고 시작됨 (sodam)");
+    notifyListeners();
+    print("📢 BLE 광고 시작됨 (sodam)");
   }
 
+  // 👉 광고 중지
+  Future<void> stopAdvertising() async {
+    if (!_isAdvertising) return;
+
+    await _blePeripheral.stop();
+    _isAdvertising = false;
+    notifyListeners();
+    print("🛑 광고 중지됨");
+  }
+
+  // 👉 스캔 시작
   Future<void> startScanning({Duration? duration}) async {
     if (_isScanning) return;
 
     await flutter_blue.FlutterBluePlus.startScan(timeout: duration);
     _isScanning = true;
-    print("🔍 스캔 시작됨 (${duration?.inSeconds ?? 0}초)");
+    _cacheScanResults();
+    notifyListeners();
+    print("🔍 BLE 스캔 시작됨 (${duration?.inSeconds ?? 0}초)");
+  }
+
+  // 👉 스캔 중지
+  Future<void> stopScanning() async {
+    if (!_isScanning) return;
+
+    await flutter_blue.FlutterBluePlus.stopScan();
+    _isScanning = false;
+    notifyListeners();
+    print("🛑 스캔 중지됨");
+  }
+
+  // 🔧 전체 정지
+  Future<void> stopAll() async {
+    await stopAdvertising();
+    await stopScanning();
   }
 
   Stream<List<flutter_blue.ScanResult>> get scanResults =>
@@ -108,10 +121,11 @@ class BluetoothService extends ChangeNotifier {
               _writeChars[receiverId] = char;
             }
             if (char.properties.notify) {
+              _notifyChars[receiverId] = char;
               await char.setNotifyValue(true);
               char.lastValueStream.listen((value) {
                 final msg = utf8.decode(value);
-                print("📩 [$receiverId] 수신됨: $msg");
+                print("📩 [$receiverId] 수신: $msg");
                 if (_onMessageReceived != null) {
                   _onMessageReceived!(msg);
                 }
@@ -151,23 +165,31 @@ class BluetoothService extends ChangeNotifier {
       await writeChar.write(data, withoutResponse: true);
       print("📤 [$receiverId] 메시지 전송 완료: $message");
     } catch (e) {
-      print("⚠️ [$receiverId] 전송 실패: $e");
+      print("⚠️ [$receiverId] 메시지 전송 실패: $e");
     }
   }
 
   Future<void> broadcastMessage(List<String> receiverIds, String message) async {
+    print("📡 다자간 메시지 브로드캐스트 시작");
     for (final id in receiverIds) {
       await sendMessageTo(id, message);
       await Future.delayed(const Duration(milliseconds: 200));
     }
+    print("📡 브로드캐스트 완료");
   }
 
   Future<void> disconnectAll() async {
+    print("🔌 연결된 모든 기기 해제 시작");
     for (final device in _connectedDevices.values) {
-      await device.disconnect();
+      try {
+        await device.disconnect();
+      } catch (e) {
+        print("⚠️ 연결 해제 실패: $e");
+      }
     }
     _connectedDevices.clear();
     _writeChars.clear();
-    print("🔌 모든 기기 연결 해제됨");
+    _notifyChars.clear();
+    print("🔌 모든 BLE 연결 해제 완료");
   }
 }

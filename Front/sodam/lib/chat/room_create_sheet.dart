@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../chat/chat_room_model.dart';
+import '../services/bluetooth_service.dart' as my_ble;
+import 'chat_room_page.dart';
 
 class RoomCreateSheet extends StatefulWidget {
   final List<BluetoothDevice> bleUsers;
@@ -22,6 +24,56 @@ class _RoomCreateSheetState extends State<RoomCreateSheet> {
     _titleController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _createRoom() async {
+    final room = ChatRoomModel(
+      title: _titleController.text,
+      participants: _selected.toList(),
+      isSecret: _isSecret,
+      password: _isSecret ? _passwordController.text : null,
+    );
+
+    final writeChars = <BluetoothCharacteristic>[];
+    final notifyChars = <BluetoothCharacteristic>[];
+
+    for (final device in _selected) {
+      try {
+        await device.connect(autoConnect: false);
+        final services = await device.discoverServices();
+
+        for (final service in services) {
+          for (final char in service.characteristics) {
+            if (char.properties.write && !writeChars.contains(char)) {
+              writeChars.add(char);
+            }
+            if (char.properties.notify && !notifyChars.contains(char)) {
+              await char.setNotifyValue(true);
+              notifyChars.add(char);
+              char.lastValueStream.listen((value) {
+                final msg = String.fromCharCodes(value);
+                print("📩 수신: $msg");
+              });
+            }
+          }
+        }
+      } catch (e) {
+        print("⚠️ 연결 실패: $e");
+      }
+    }
+
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatRoomPage(
+            roomTitle: room.title,
+            writeChars: writeChars,
+            notifyChars: notifyChars,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -83,18 +135,8 @@ class _RoomCreateSheetState extends State<RoomCreateSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  final newRoom = ChatRoomModel(
-                    title: _titleController.text,
-                    participants: _selected.toList(),
-                    isSecret: _isSecret,
-                    password: _isSecret ? _passwordController.text : null,
-                  );
-                  Navigator.pop(context, newRoom);
-                },
-
+                onPressed: _createRoom,
                 child: const Text('방 만들기'),
-
               ),
             ),
           ],
