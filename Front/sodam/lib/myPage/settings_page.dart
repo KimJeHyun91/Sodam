@@ -49,11 +49,14 @@ class _SettingsPageState extends State<SettingsPage> {
               enabled: !isGuest,
               onTap: isGuest
                   ? null
-                  : () {
-                Navigator.push(
+                  : () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const EditProfilePage()),
                 );
+                if (result == true && context.mounted) {
+                  Navigator.pop(context, true); // SettingsPage도 true로 pop해서 MyPage 새로고침 유도
+                }
               },
             ),
             _settingItem(context, "화면", onTap: () {
@@ -116,7 +119,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
         if (shouldLogout == true) {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('loggedInId');
+
+          final isGuest = prefs.getBool('isGuest') ?? false;
+          if (isGuest) {
+            // ✅ 비회원: uuid 유지하고 isGuest만 false로 설정
+            await prefs.setBool('isGuest', false);
+          } else {
+            // ✅ 회원: 로그인 관련 정보만 제거
+            await prefs.remove('loggedInId');
+            await prefs.remove('token');
+            await prefs.remove('jwtToken');
+            await prefs.remove('point_no');
+          }
 
           if (context.mounted) {
             Navigator.pushAndRemoveUntil(

@@ -12,6 +12,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,6 +46,7 @@ public class MemberDomain {
 	@ColumnDefault("'U'")
     @Check(constraints = "\"authorization\" IN ('U', 'A')")
 	private Character authorization;
+	private String image_url;
 	@CreatedDate
 	private LocalDateTime created_date;
 	@LastModifiedDate

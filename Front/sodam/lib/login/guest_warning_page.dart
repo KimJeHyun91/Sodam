@@ -1,13 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:sodam/main_page.dart';
 import 'signup_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import 'dart:math';
+
+Future<void> initializeGuestAccount() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  if (!prefs.containsKey('guest_uuid')) {
+    final uuid = DateTime.now().microsecondsSinceEpoch.toString();
+    prefs.setString('guest_uuid', uuid);
+  }
+
+  if (!prefs.containsKey('guest_nickname')) {
+    final List<String> used = prefs.getStringList('used_guest_numbers') ?? [];
+
+    int rangeStart = 1;
+    int rangeSize = 100;
+
+    int guestNumber;
+    while (true) {
+      final currentRange =
+        List.generate(rangeSize, (i) => (rangeStart + i).toString());
+
+      final available = currentRange.toSet().difference(used.toSet()).toList();
+
+      if (available.isNotEmpty) {
+        guestNumber = int.parse(available[Random().nextInt(available.length)]);
+        break;
+      } else {
+        rangeStart += rangeSize;
+      }
+    }
+    prefs.setString('guest_nickname', '비회원$guestNumber');
+    used.add(guestNumber.toString());
+    prefs.setStringList('used_guest_numbers', used);
+  }
+  // 비회원 표시
+  prefs.setBool('isGuest', true);
+}
 
 class GuestWarningPage extends StatelessWidget {
   const GuestWarningPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+        data: ThemeData.light().copyWith(brightness: Brightness.light),
+    child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -58,7 +99,8 @@ class GuestWarningPage extends StatelessWidget {
                     ),
                     backgroundColor: Colors.white,
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    await initializeGuestAccount();
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const MainPage()),
@@ -94,6 +136,7 @@ class GuestWarningPage extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
