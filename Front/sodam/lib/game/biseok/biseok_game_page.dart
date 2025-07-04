@@ -11,7 +11,6 @@ class BiseokGamePage extends StatefulWidget {
 }
 
 class _BiseokGamePageState extends State<BiseokGamePage> {
-  // ========== 게임 상태 ==========
   static const double gravity = 0.5;
   static const double powerStep = 0.02;
   static const double maxPower = 1.0;
@@ -37,14 +36,15 @@ class _BiseokGamePageState extends State<BiseokGamePage> {
 
   int score = 0;
   int timeLeft = 60;
+  int consecutiveHits = 0;
 
   Timer? powerGaugeTimer;
   Timer? stoneMotionTimer;
   Timer? countdownTimer;
 
   static const double stoneSize = 20;
-  static const double targetWidth = 20;
-  static const double targetHeight = 40;
+  static const double targetWidth = 40;
+  static const double targetHeight = 60;
 
   @override
   void initState() {
@@ -108,7 +108,9 @@ class _BiseokGamePageState extends State<BiseokGamePage> {
     setState(() {
       biseokX = randomX;
       biseokY = minY + Random().nextDouble() * (maxY - minY);
-      windForce = Random().nextDouble() * 2 - 1;
+      // ✅ 서풍은 약하게
+      windForce = Random().nextDouble();
+      windForce = Random().nextBool() ? windForce * 1.0 : windForce * -0.3;
     });
   }
 
@@ -124,8 +126,8 @@ class _BiseokGamePageState extends State<BiseokGamePage> {
     powerGaugeTimer?.cancel();
 
     final rad = launchAngle * pi / 180;
-    velocityX = cos(rad) * launchPower * 25 + windForce * 5;
-    velocityY = -sin(rad) * launchPower * 25;
+    velocityX = cos(rad) * launchPower * 30 + windForce * 3;
+    velocityY = -sin(rad) * launchPower * 30;
 
     stoneMotionTimer?.cancel();
     stoneMotionTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
@@ -140,15 +142,19 @@ class _BiseokGamePageState extends State<BiseokGamePage> {
       velocityY += gravity;
 
       final stoneRect = Rect.fromLTWH(stonePosX, stonePosY, stoneSize, stoneSize);
-      final biseokRect = Rect.fromLTWH(biseokX + 5, biseokY + 10, targetWidth, targetHeight);
+      final biseokRect = Rect.fromLTWH(biseokX, biseokY, targetWidth, targetHeight);
 
       if (!isHitEffectVisible && stoneRect.overlaps(biseokRect)) {
-        score++;
+        // ✅ 점수: 기본 2점, 연속 2회 이상 3점
+        consecutiveHits++;
+        score += consecutiveHits >= 2 ? 3 : 2;
         isHitEffectVisible = true;
         stoneVisible = false;
         stoneMotionTimer?.cancel();
         prepareNextRound();
       } else if (!isHitEffectVisible && stonePosY >= groundY) {
+        // 실패 시 연속 히트 초기화
+        consecutiveHits = 0;
         resetStonePosition();
         velocityX = 0;
         velocityY = 0;
@@ -230,27 +236,13 @@ class _BiseokGamePageState extends State<BiseokGamePage> {
             onPanUpdate: (details) => updateLaunchAngle(details.localPosition),
             child: Stack(
               children: [
+                // 배경
                 Positioned.fill(
                   child: Container(
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/game/background_korean_field.png'),
                         fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: groundY,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.lightBlueAccent, Colors.transparent],
                       ),
                     ),
                   ),

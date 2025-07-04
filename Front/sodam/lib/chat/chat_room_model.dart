@@ -1,6 +1,8 @@
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
 class ChatRoomModel {
   final String title;
-  final List<String> participants;
+  final List<BluetoothDevice> participants;
   final bool isSecret;
   final String? password;
 
